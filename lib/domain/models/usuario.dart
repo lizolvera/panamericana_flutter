@@ -15,6 +15,7 @@ class Usuario {
     this.email,
     this.telefono,
     this.rol = 'usuario',
+    this.preguntaSecreta,
     this.direcciones = const [],
   });
 
@@ -26,6 +27,9 @@ class Usuario {
   final String? email;
   final String? telefono;
   final String rol;
+
+  /// Clave de la pregunta secreta (p. ej. "personaje-favorito").
+  final String? preguntaSecreta;
   final List<Direccion> direcciones;
 
   factory Usuario.fromJson(Map<String, dynamic> json) {
@@ -40,6 +44,7 @@ class Usuario {
       email: json['email'] as String?,
       telefono: json['telefono'] as String?,
       rol: json['rol'] as String? ?? 'usuario',
+      preguntaSecreta: json['preguntaSecreta'] as String?,
       direcciones: (json['direcciones'] as List<dynamic>? ?? const [])
           .map((e) => Direccion.fromJson(e as Map<String, dynamic>))
           .toList(),

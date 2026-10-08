@@ -9,8 +9,10 @@ import 'package:panamericana_flutter/data/repositories/catalog_repository.dart';
 import 'package:panamericana_flutter/data/storage/session_storage.dart';
 import 'package:panamericana_flutter/main.dart';
 import 'package:panamericana_flutter/ui/features/auth/view_models/auth_view_model.dart';
+import 'package:panamericana_flutter/ui/features/cart/view_models/cart_view_model.dart';
 import 'package:panamericana_flutter/ui/features/catalog/view_models/catalog_view_model.dart';
 import 'package:panamericana_flutter/ui/features/catalog/views/product_detail_view.dart';
+import 'package:panamericana_flutter/ui/features/shell/tab_index_notifier.dart';
 
 void main() {
   testWidgets('La app arranca mostrando el catálogo (vista invitado)',
@@ -31,6 +33,8 @@ void main() {
           ChangeNotifierProvider(
             create: (_) => CatalogViewModel(catalogRepository),
           ),
+          ChangeNotifierProvider(create: (_) => CartViewModel()),
+          ChangeNotifierProvider(create: (_) => TabIndexNotifier()),
         ],
         child: const PanamericanaApp(),
       ),
@@ -50,12 +54,19 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await SessionStorage.instance.init();
 
+    final authRepository = AuthRepository(ApiClient.instance.dio);
     final catalogRepository = CatalogRepository(ApiClient.instance.dio);
 
     await tester.pumpWidget(
       MultiProvider(
         providers: [
           Provider.value(value: catalogRepository),
+          ChangeNotifierProvider(
+            create: (_) =>
+                AuthViewModel(authRepository, SessionStorage.instance),
+          ),
+          ChangeNotifierProvider(create: (_) => CartViewModel()),
+          ChangeNotifierProvider(create: (_) => TabIndexNotifier()),
         ],
         child: const MaterialApp(
           home: ProductDetailView(productoId: 'abc123'),
@@ -65,7 +76,7 @@ void main() {
 
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('Detalle'), findsOneWidget);
+    expect(find.text('Panamericana'), findsOneWidget);
     expect(find.text('Reintentar'), findsOneWidget);
   });
 }

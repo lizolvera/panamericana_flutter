@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../../../../data/repositories/catalog_repository.dart';
 import '../../../../domain/models/producto.dart';
+import '../../auth/view_models/auth_view_model.dart';
+import '../../cart/view_models/cart_view_model.dart';
+import '../../shell/shell_scaffold.dart';
 import '../view_models/product_detail_view_model.dart';
 
 /// **View del detalle de producto** (vista invitado).
@@ -27,10 +30,14 @@ class ProductDetailView extends StatelessWidget {
       // El ViewModel queda acotado a esta ruta.
       create: (_) => ProductDetailViewModel(
         context.read<CatalogRepository>(),
-      )..loadProduct(productoId),
-      child: _ProductDetailBody(
-        productoId: productoId,
-        productoInicial: productoInicial,
+      )
+        ..loadProduct(productoId)
+        ..loadSimilares(productoId),
+      child: ShellScaffold(
+        body: _ProductDetailBody(
+          productoId: productoId,
+          productoInicial: productoInicial,
+        ),
       ),
     );
   }
@@ -47,22 +54,22 @@ class _ProductDetailBody extends StatelessWidget {
     final vm = context.watch<ProductDetailViewModel>();
     final producto = vm.producto ?? productoInicial;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(producto?.nombre ?? 'Detalle')),
-      body: _contenido(context, vm),
-      bottomNavigationBar: producto != null
-          ? TweenAnimationBuilder<double>(
-              // La barra de compra sube deslizándose con un ligero rebote.
-              tween: Tween(begin: 1, end: 0),
-              duration: const Duration(milliseconds: 450),
-              curve: Curves.easeOutBack,
-              builder: (context, valor, child) => Transform.translate(
-                offset: Offset(0, 56 * valor),
-                child: child,
-              ),
-              child: _BarraCompra(producto: producto),
-            )
-          : null,
+    return Column(
+      children: [
+        Expanded(child: _contenido(context, vm)),
+        if (producto != null)
+          TweenAnimationBuilder<double>(
+            // La barra de compra sube deslizándose con un ligero rebote.
+            tween: Tween(begin: 1, end: 0),
+            duration: const Duration(milliseconds: 450),
+            curve: Curves.easeOutBack,
+            builder: (context, valor, child) => Transform.translate(
+              offset: Offset(0, 56 * valor),
+              child: child,
+            ),
+            child: _BarraCompra(producto: producto),
+          ),
+      ],
     );
   }
 
@@ -73,7 +80,7 @@ class _ProductDetailBody extends StatelessWidget {
         final inicial = productoInicial;
         if (inicial != null) {
           // Mostrar al instante lo que trae el catálogo (con Hero).
-          return _Detalle(producto: inicial);
+          return _Detalle(producto: inicial, similares: vm.similares);
         }
         return const Center(child: CircularProgressIndicator());
       case ProductDetailStatus.error:
@@ -100,7 +107,10 @@ class _ProductDetailBody extends StatelessWidget {
           ),
         );
       case ProductDetailStatus.loaded:
-        return _Detalle(producto: vm.producto!);
+        return _Detalle(
+          producto: vm.producto!,
+          similares: vm.similares,
+        );
     }
   }
 }
@@ -141,9 +151,10 @@ class _SeccionAnimada extends StatelessWidget {
 }
 
 class _Detalle extends StatefulWidget {
-  const _Detalle({required this.producto});
+  const _Detalle({required this.producto, required this.similares});
 
   final Producto producto;
+  final List<Producto> similares;
 
   @override
   State<_Detalle> createState() => _DetalleState();
@@ -314,6 +325,35 @@ class _DetalleState extends State<_Detalle> with SingleTickerProviderStateMixin 
                     ],
                   ),
                 ),
+                if (widget.similares.isNotEmpty)
+                  _SeccionAnimada(
+                    controller: _controller,
+                    inicio: 0.6,
+                    fin: 1.0,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 20),
+                        Text(
+                          'Productos similares',
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          height: 180,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: widget.similares.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(width: 8),
+                            itemBuilder: (context, i) => _ProductoMiniCard(
+                              producto: widget.similares[i],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -355,6 +395,80 @@ class _DetalleState extends State<_Detalle> with SingleTickerProviderStateMixin 
       );
 }
 
+/// Tarjeta compacta para "Productos similares" (navega al detalle).
+class _ProductoMiniCard extends StatelessWidget {
+  const _ProductoMiniCard({required this.producto});
+
+  final Producto producto;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final precio = producto.precioFinal ?? producto.precioNormal ?? 0;
+
+    return SizedBox(
+      width: 140,
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ProductDetailView(
+                productoId: producto.id!,
+                productoInicial: producto,
+              ),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: (producto.imagenUrl != null &&
+                        producto.imagenUrl!.isNotEmpty)
+                    ? Image.network(
+                        producto.imagenUrl!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        errorBuilder: (_, _, _) => _placeholderMini(),
+                      )
+                    : _placeholderMini(),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      producto.nombre,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '\$${precio.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _placeholderMini() => Container(
+        color: Colors.grey.shade200,
+        child: const Icon(Icons.inventory_2, size: 28),
+      );
+}
+
 class _BarraCompra extends StatelessWidget {
   const _BarraCompra({required this.producto});
 
@@ -362,22 +476,32 @@ class _BarraCompra extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthViewModel>();
+    final cart = context.read<CartViewModel>();
+    final esCliente = auth.isCliente;
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: FilledButton.icon(
           onPressed: () {
-            // TODO(fase cliente): agregar al carrito (CartViewModel).
+            if (!esCliente) {
+              // Los invitados no compran: se les pide iniciar sesión.
+              Navigator.of(context).pushNamed('/login');
+              return;
+            }
+            cart.agregar(producto);
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'El carrito estará disponible en la fase de cliente.',
-                ),
+              SnackBar(
+                content: Text('Agregado al carrito: ${producto.nombre}'),
+                duration: const Duration(seconds: 2),
               ),
             );
           },
           icon: const Icon(Icons.add_shopping_cart),
-          label: const Text('Agregar al carrito'),
+          label: Text(
+            esCliente ? 'Agregar al carrito' : 'Inicia sesión para comprar',
+          ),
           style: FilledButton.styleFrom(
             minimumSize: const Size.fromHeight(48),
           ),

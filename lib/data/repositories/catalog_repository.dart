@@ -72,6 +72,40 @@ class CatalogRepository {
         .toList();
   }
 
+  /// `POST /api/productos/recomendaciones` — recomendador basado en items
+  /// (co-ocurrencia en pedidos entregados). Devuelve productos recomendados
+  /// para las semillas dadas, con campos extra `similitud` y `motivo`.
+  Future<List<Producto>> getRecomendaciones({
+    required List<String> productoIds,
+    int limite = 6,
+  }) async {
+    if (productoIds.isEmpty) return const [];
+    final res = await _dio.post(
+      '/api/productos/recomendaciones',
+      data: {'productos': productoIds},
+      queryParameters: {'limite': limite},
+    );
+    final data = res.data as List<dynamic>;
+    return data
+        .map((e) => Producto.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// `GET /api/productos/:id/recomendaciones` — similares de un producto.
+  Future<List<Producto>> getRecomendacionesDeProducto(
+    String id, {
+    int limite = 6,
+  }) async {
+    final res = await _dio.get(
+      '/api/productos/$id/recomendaciones',
+      queryParameters: {'limite': limite},
+    );
+    final data = res.data as List<dynamic>;
+    return data
+        .map((e) => Producto.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
   /// `GET /api/carruseles?activo=true` — banners activos en orden.
   Future<List<Carrusel>> getCarruseles() async {
     final res = await _dio.get(

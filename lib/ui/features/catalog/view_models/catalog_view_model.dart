@@ -29,6 +29,9 @@ class CatalogViewModel extends ChangeNotifier {
   List<Carrusel> _carruseles = [];
   List<Oferta> _ofertas = [];
 
+  /// Productos recomendados por el backend (destacados).
+  List<Producto> _recomendados = [];
+
   String? _marcaFiltro;
   String? _familiaFiltro;
   String _busqueda = '';
@@ -46,6 +49,7 @@ class CatalogViewModel extends ChangeNotifier {
   List<Familia> get familias => _familias;
   List<Carrusel> get carruseles => _carruseles;
   List<Oferta> get ofertas => _ofertas;
+  List<Producto> get recomendados => _recomendados;
 
   String? get marcaFiltro => _marcaFiltro;
   String? get familiaFiltro => _familiaFiltro;
@@ -115,9 +119,11 @@ class CatalogViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Productos destacados: los que tienen oferta activa (los trae la API
-  /// con `ofertaAplicada`); si no hay ofertas, se toman los primeros.
+  /// Productos destacados: usa el **recomendador del backend**; si no hay
+  /// resultados (sin historial o sin conexión), cae a productos con oferta
+  /// activa y, en último caso, a los primeros del catálogo.
   List<Producto> get productosDestacados {
+    if (_recomendados.isNotEmpty) return _recomendados;
     final conOferta =
         _productos.where((p) => p.ofertaAplicada != null).toList();
     if (conOferta.isNotEmpty) return conOferta.take(8).toList();
@@ -144,6 +150,26 @@ class CatalogViewModel extends ChangeNotifier {
       _familias = resultados[2] as List<Familia>;
       _carruseles = resultados[3] as List<Carrusel>;
       _ofertas = resultados[4] as List<Oferta>;
+
+      // 🔮 "Productos Destacados" con el recomendador del backend (basado
+      // en items): semillas = productos con oferta, o los primeros del
+      // catálogo si no hay ofertas. Si falla, se cae al respaldo local.
+      final semillas = _productos
+          .where((p) => p.ofertaAplicada != null)
+          .toList();
+      final semillasFinal =
+          semillas.isNotEmpty ? semillas : _productos.take(6).toList();
+      if (semillasFinal.isNotEmpty) {
+        try {
+          _recomendados = await _repository.getRecomendaciones(
+            productoIds:
+                semillasFinal.map((p) => p.id).whereType<String>().toList(),
+            limite: 8,
+          );
+        } catch (_) {
+          _recomendados = [];
+        }
+      }
 
       _status = CatalogStatus.loaded;
       notifyListeners();

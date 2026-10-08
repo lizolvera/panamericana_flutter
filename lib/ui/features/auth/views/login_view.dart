@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../shell/shell_scaffold.dart';
+import 'google/google_button.dart';
 import '../view_models/auth_view_model.dart';
 
 /// **View de login** (2 pasos, igual que la web):
@@ -18,13 +20,31 @@ class _LoginViewState extends State<LoginView> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _codeCtrl = TextEditingController();
+  late final AuthViewModel _vm;
+
+  @override
+  void initState() {
+    super.initState();
+    _vm = context.read<AuthViewModel>();
+    // Cierra el login automáticamente cuando la sesión queda autenticada
+    // (aplica a 2FA, Google en móvil y al botón GSI en web).
+    _vm.addListener(_onAuthChanged);
+  }
 
   @override
   void dispose() {
+    _vm.removeListener(_onAuthChanged);
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _codeCtrl.dispose();
     super.dispose();
+  }
+
+  void _onAuthChanged() {
+    if (!mounted) return;
+    if (_vm.isAuthenticated && Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
   }
 
   Future<void> _enviarCredenciales(AuthViewModel vm) async {
@@ -40,15 +60,22 @@ class _LoginViewState extends State<LoginView> {
 
   Future<void> _verificarCodigo(AuthViewModel vm) async {
     final ok = await vm.verifyCode(_codeCtrl.text);
-    if (!ok && mounted) {
-      _mostrarError(vm);
-    }
+    if (!mounted) return;
+    if (!ok) _mostrarError(vm);
+  }
+
+  Future<bool> _iniciarConGoogle(AuthViewModel vm) async {
+    final ok = await vm.loginWithGoogle();
+    if (!mounted) return false;
+    if (!ok) _mostrarError(vm);
+    return ok;
   }
 
   void _mostrarError(AuthViewModel vm) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(vm.errorMessage ?? 'Ocurrió un error')),
-    );
+    final mensaje = vm.errorMessage;
+    if (mensaje == null) return; // p. ej. el usuario canceló Google
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensaje)));
   }
 
   @override
@@ -57,8 +84,7 @@ class _LoginViewState extends State<LoginView> {
     final paso2 = vm.status == AuthStatus.codeSent;
     final cargando = vm.status == AuthStatus.loading;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Iniciar sesión')),
+    return ShellScaffold(
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -68,9 +94,15 @@ class _LoginViewState extends State<LoginView> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Distribuidora Panamericana',
+                  'Inicia sesión',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Accede con tu correo o con Google',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 24),
                 if (!paso2) ...[
@@ -96,6 +128,19 @@ class _LoginViewState extends State<LoginView> {
                     onPressed: cargando ? null : () => _enviarCredenciales(vm),
                     child: const Text('Enviar código de seguridad'),
                   ),
+                  const SizedBox(height: 16),
+                  const Row(
+                    children: [
+                      Expanded(child: Divider()),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        child: Text('o', style: TextStyle(color: Colors.grey)),
+                      ),
+                      Expanded(child: Divider()),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  googleSignInButton(context, () => _iniciarConGoogle(vm)),
                 ] else ...[
                   const Text(
                     'Te enviamos un código de 6 dígitos a tu correo.',

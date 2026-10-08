@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Almacenamiento local de la sesión: token JWT, rol y nombre.
@@ -16,8 +17,15 @@ class SessionStorage {
   SharedPreferences? _prefs;
 
   /// Debe llamarse una sola vez antes de `runApp`.
+  ///
+  /// Nunca lanza: si el almacenamiento local no está disponible, la app
+  /// arranca igual (los getters devuelven null y guardar no hace nada).
   Future<void> init() async {
-    _prefs ??= await SharedPreferences.getInstance();
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+    } catch (e) {
+      debugPrint('[SessionStorage] Almacenamiento local no disponible: $e');
+    }
   }
 
   String? get token => _prefs?.getString(_kToken);

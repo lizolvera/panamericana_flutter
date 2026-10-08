@@ -612,43 +612,24 @@ class _Paginacion extends StatelessWidget {
                 ?.copyWith(color: Colors.grey),
           ),
         ),
-        const SizedBox(height: 8),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextButton(
-                onPressed: vm.hayPaginaAnterior ? vm.paginaAnterior : null,
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.chevron_left),
-                    Text('Anterior'),
-                  ],
-                ),
-              ),
-              ..._paginas(context, vm),
-              TextButton(
-                onPressed: vm.hayPaginaSiguiente ? vm.paginaSiguiente : null,
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Siguiente'),
-                    Icon(Icons.chevron_right),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        const SizedBox(height: 6),
+        // Fila compacta que cabe en pantalla sin scroll horizontal.
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _BotonAnterior(vm: vm),
+            const SizedBox(width: 2),
+            ..._paginas(context, vm),
+            const SizedBox(width: 2),
+            _BotonSiguiente(vm: vm),
+          ],
         ),
       ],
     );
   }
 
-  /// Números de página: hasta 5 se muestran todos; si hay más, una ventana
-  /// deslizante de 5 alrededor de la actual. La activa es un botón sólido
-  /// que "pop" al seleccionarse (escala 0.85 -> 1 con easeOutBack).
+  /// Números de página compactos: hasta 5 se muestran todos; si hay más,
+  /// una ventana deslizante de 5 alrededor de la actual.
   List<Widget> _paginas(BuildContext context, CatalogViewModel vm) {
     final total = vm.totalPaginas;
     final actual = vm.paginaActual;
@@ -658,7 +639,7 @@ class _Paginacion extends StatelessWidget {
       final esActual = n == actual;
       botones.add(
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 2),
           child: esActual
               ? TweenAnimationBuilder<double>(
                   key: ValueKey('pagina-seleccionada-$n'),
@@ -670,10 +651,14 @@ class _Paginacion extends StatelessWidget {
                   child: FilledButton(
                     onPressed: () => vm.irAPagina(n),
                     style: FilledButton.styleFrom(
-                      minimumSize: const Size(44, 40),
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      minimumSize: const Size(36, 36),
+                      padding: EdgeInsets.zero,
                       shape: const StadiumBorder(),
-                      textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                      visualDensity: VisualDensity.compact,
+                      textStyle: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     child: Text('$n'),
                   ),
@@ -681,9 +666,11 @@ class _Paginacion extends StatelessWidget {
               : OutlinedButton(
                   onPressed: () => vm.irAPagina(n),
                   style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(44, 40),
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    minimumSize: const Size(36, 36),
+                    padding: EdgeInsets.zero,
                     shape: const StadiumBorder(),
+                    visualDensity: VisualDensity.compact,
+                    textStyle: const TextStyle(fontSize: 13),
                   ),
                   child: Text('$n'),
                 ),
@@ -702,6 +689,60 @@ class _Paginacion extends StatelessWidget {
       }
     }
     return botones;
+  }
+}
+
+/// Botón compacto "Ant." (anterior).
+class _BotonAnterior extends StatelessWidget {
+  const _BotonAnterior({required this.vm});
+
+  final CatalogViewModel vm;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: vm.hayPaginaAnterior ? vm.paginaAnterior : null,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        minimumSize: const Size(0, 36),
+        visualDensity: VisualDensity.compact,
+        textStyle: const TextStyle(fontSize: 13),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.chevron_left, size: 18),
+          Text('Ant.'),
+        ],
+      ),
+    );
+  }
+}
+
+/// Botón compacto "Sig." (siguiente).
+class _BotonSiguiente extends StatelessWidget {
+  const _BotonSiguiente({required this.vm});
+
+  final CatalogViewModel vm;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: vm.hayPaginaSiguiente ? vm.paginaSiguiente : null,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        minimumSize: const Size(0, 36),
+        visualDensity: VisualDensity.compact,
+        textStyle: const TextStyle(fontSize: 13),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('Sig.'),
+          Icon(Icons.chevron_right, size: 18),
+        ],
+      ),
+    );
   }
 }
 

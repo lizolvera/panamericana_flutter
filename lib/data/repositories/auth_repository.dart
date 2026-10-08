@@ -56,6 +56,16 @@ class AuthRepository {
     return AuthResult.fromJson(res.data as Map<String, dynamic>);
   }
 
+  /// Inicio de sesión con Google: el backend valida el `idToken`, crea el
+  /// usuario si no existe y devuelve `{ token, rol, nombre }`.
+  Future<AuthResult> loginWithGoogle(String idToken) async {
+    final res = await _dio.post(
+      '/api/usuarios/google-login',
+      data: {'idToken': idToken},
+    );
+    return AuthResult.fromJson(res.data as Map<String, dynamic>);
+  }
+
   /// Perfil del cliente autenticado.
   Future<Usuario> getPerfil() async {
     final res = await _dio.get('/api/usuarios/perfil');
@@ -93,5 +103,38 @@ class AuthRepository {
 
   Future<void> deleteDireccion(String id) async {
     await _dio.delete('/api/usuarios/direcciones/$id');
+  }
+
+  /// Marca una dirección como predeterminada.
+  Future<void> setDireccionPredeterminada(String id) async {
+    await _dio.put('/api/usuarios/direcciones/$id/predeterminada');
+  }
+
+  /// Cambia la contraseña del cliente autenticado.
+  Future<void> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await _dio.put(
+      '/api/usuarios/update-password',
+      data: {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      },
+    );
+  }
+
+  /// Actualiza la pregunta y respuesta secreta.
+  Future<void> updateSecret({
+    required String preguntaSecreta,
+    required String respuestaSecreta,
+  }) async {
+    await _dio.put(
+      '/api/usuarios/update-secret',
+      data: {
+        'preguntaSecreta': preguntaSecreta,
+        'respuestaSecreta': respuestaSecreta,
+      },
+    );
   }
 }

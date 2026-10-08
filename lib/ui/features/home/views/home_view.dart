@@ -1,166 +1,217 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../domain/models/cart_item.dart';
 import '../../auth/view_models/auth_view_model.dart';
+import '../../cart/view_models/cart_view_model.dart';
 import '../../catalog/views/catalog_view.dart';
+import '../../profile/views/profile_view.dart';
+import '../../shell/shell_scaffold.dart';
+import '../../shell/tab_index_notifier.dart';
 
-/// **View principal**: contenedor con barra inferior (Inicio / Carrito /
-/// Perfil). Muestra la vista de **invitado** (catálogo público) o la vista
-/// de **cliente** según el rol de la sesión.
-class HomeView extends StatefulWidget {
+/// **View principal**: usa la shell persistente (header + footer) y cambia
+/// el contenido según la pestaña activa. El inicio es el catálogo para
+/// todos (invitados y clientes).
+class HomeView extends StatelessWidget {
   const HomeView({super.key});
 
   @override
-  State<HomeView> createState() => _HomeViewState();
-}
-
-class _HomeViewState extends State<HomeView> {
-  int _indice = 0;
-
-  @override
   Widget build(BuildContext context) {
+    final tab = context.watch<TabIndexNotifier>();
     final auth = context.watch<AuthViewModel>();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Panamericana'),
-        centerTitle: false,
-      ),
-      body: _cuerpo(context, auth),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _indice,
-        onDestinationSelected: (i) {
-          // El perfil exige sesión: si es invitado, primero a iniciar sesión.
-          if (i == 2 && !auth.isCliente) {
-            Navigator.of(context).pushNamed('/login');
-            return;
-          }
-          setState(() => _indice = i);
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Inicio',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.shopping_cart_outlined),
-            selectedIcon: Icon(Icons.shopping_cart),
-            label: 'Carrito',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Perfil',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _cuerpo(BuildContext context, AuthViewModel auth) {
-    switch (_indice) {
+    final Widget cuerpo;
+    switch (tab.indice) {
       case 0:
-        return auth.isCliente
-            ? _ClienteHome(nombre: auth.nombre)
-            : const CatalogView();
+        cuerpo = const CatalogView();
       case 1:
-        return _CarritoPlaceholder(isCliente: auth.isCliente);
+        cuerpo = _CarritoView(isCliente: auth.isCliente);
       default:
-        return _PerfilPlaceholder(
-          isCliente: auth.isCliente,
-          nombre: auth.nombre,
-        );
+        cuerpo = auth.isCliente ? const ProfileView() : const _LoginPrompt();
     }
+
+    return ShellScaffold(body: cuerpo);
   }
 }
 
-class _ClienteHome extends StatelessWidget {
-  const _ClienteHome({this.nombre});
-
-  final String? nombre;
+class _LoginPrompt extends StatelessWidget {
+  const _LoginPrompt();
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Hola, ${nombre ?? 'cliente'} 👋\n\nVista de cliente:\n'
-        'carrito, perfil y compras.',
-        textAlign: TextAlign.center,
-      ),
-    );
+    return const Center(child: Text('Inicia sesión para ver tu perfil'));
   }
 }
 
-class _CarritoPlaceholder extends StatelessWidget {
-  const _CarritoPlaceholder({required this.isCliente});
+class _CarritoView extends StatelessWidget {
+  const _CarritoView({required this.isCliente});
 
   final bool isCliente;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.shopping_cart_outlined,
-            size: 64,
-            color: Colors.grey,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            isCliente
-                ? 'Tu carrito (próximamente)'
-                : 'Inicia sesión para ver tu carrito',
-            textAlign: TextAlign.center,
-          ),
-          if (!isCliente) ...[
+    final cart = context.watch<CartViewModel>();
+
+    if (!isCliente) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.shopping_cart_outlined,
+              size: 64,
+              color: Colors.grey,
+            ),
+            const SizedBox(height: 12),
+            const Text('Inicia sesión para ver tu carrito'),
             const SizedBox(height: 12),
             FilledButton(
               onPressed: () => Navigator.of(context).pushNamed('/login'),
               child: const Text('Iniciar sesión'),
             ),
           ],
-        ],
-      ),
+        ),
+      );
+    }
+
+    if (cart.items.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.shopping_cart_outlined, size: 64, color: Colors.grey),
+            SizedBox(height: 12),
+            Text('Tu carrito está vacío'),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            itemCount: cart.items.length,
+            itemBuilder: (context, i) => _CartItemTile(item: cart.items[i]),
+          ),
+        ),
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Total', style: TextStyle(color: Colors.grey)),
+                      Text(
+                        '\$${cart.totalPrecio.toStringAsFixed(2)}',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+                FilledButton.icon(
+                  onPressed: () {
+                    // TODO(fase 3): checkout con PayPal (pagos/paypal/*).
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('El pago estará disponible en la fase 3'),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.payment),
+                  label: const Text('Comprar'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _PerfilPlaceholder extends StatelessWidget {
-  const _PerfilPlaceholder({required this.isCliente, this.nombre});
+class _CartItemTile extends StatelessWidget {
+  const _CartItemTile({required this.item});
 
-  final bool isCliente;
-  final String? nombre;
+  final CartItem item;
 
   @override
   Widget build(BuildContext context) {
-    if (!isCliente) {
-      return const Center(child: Text('Inicia sesión para ver tu perfil'));
-    }
+    final cart = context.read<CartViewModel>();
+    final producto = item.producto;
+    final id = producto.id;
+    final precio = producto.precioFinal ?? producto.precioNormal ?? 0;
 
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const CircleAvatar(
-            radius: 40,
-            child: Icon(Icons.person, size: 40),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            nombre ?? 'Cliente',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: () => context.read<AuthViewModel>().logout(),
-            icon: const Icon(Icons.logout),
-            label: const Text('Cerrar sesión'),
-          ),
-        ],
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                width: 56,
+                height: 56,
+                child: (producto.imagenUrl != null &&
+                        producto.imagenUrl!.isNotEmpty)
+                    ? Image.network(
+                        producto.imagenUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => _placeholder(),
+                      )
+                    : _placeholder(),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    producto.nombre,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '\$${precio.toStringAsFixed(2)} c/u',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              onPressed: id == null ? null : () => cart.decrementar(id),
+              icon: const Icon(Icons.remove_circle_outline),
+            ),
+            Text(
+              '${item.cantidad}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            IconButton(
+              onPressed: id == null ? null : () => cart.incrementar(id),
+              icon: const Icon(Icons.add_circle_outline),
+            ),
+          ],
+        ),
       ),
     );
   }
+
+  Widget _placeholder() => Container(
+        color: Colors.grey.shade200,
+        child: const Icon(Icons.inventory_2, size: 24),
+      );
 }
