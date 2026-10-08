@@ -11,7 +11,9 @@ import 'ui/features/shell/tab_index_notifier.dart';
 import 'ui/features/auth/views/google/google_init.dart';
 import 'ui/features/auth/views/login_view.dart';
 import 'ui/features/catalog/view_models/catalog_view_model.dart';
+import 'ui/features/catalog/views/catalog_view.dart';
 import 'ui/features/home/views/home_view.dart';
+import 'ui/theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -74,14 +76,12 @@ class PanamericanaApp extends StatelessWidget {
     return MaterialApp(
       title: 'Distribuidora Panamericana',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
       initialRoute: '/',
       routes: {
         '/': (_) => const HomeView(),
         '/login': (_) => const LoginView(),
+        '/catalogo': (_) => const CatalogViewPage(),
       },
     );
   }

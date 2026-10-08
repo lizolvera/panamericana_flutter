@@ -293,6 +293,14 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Permite reiniciar el flujo de login (p. ej. si el usuario ingresó un correo erróneo en el paso 1).
+  void resetState() {
+    _status = AuthStatus.initial;
+    _errorMessage = null;
+    _email = null;
+    notifyListeners();
+  }
+
   String _extractError(Object error) {
     if (error is GoogleSignInException) {
       final desc = error.description;

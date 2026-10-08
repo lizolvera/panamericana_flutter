@@ -53,6 +53,7 @@ class CatalogViewModel extends ChangeNotifier {
 
   String? get marcaFiltro => _marcaFiltro;
   String? get familiaFiltro => _familiaFiltro;
+  String get busqueda => _busqueda;
 
   /// Familias visibles según la marca seleccionada (cada familia
   /// pertenece a una marca en la API).

@@ -53,6 +53,7 @@ class _PreguntaViewState extends State<PreguntaView> {
   @override
   Widget build(BuildContext context) {
     return ShellScaffold(
+      titleText: 'Pregunta secreta',
       body: ListenableBuilder(
         listenable: _vm,
         builder: (context, _) {
@@ -67,9 +68,12 @@ class _PreguntaViewState extends State<PreguntaView> {
 
           final guardando = _vm.accion == AccionStatus.working;
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Form(
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 580),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -125,8 +129,10 @@ class _PreguntaViewState extends State<PreguntaView> {
                 ],
               ),
             ),
-          );
-        },
+          ),
+        ),
+      );
+    },
       ),
     );
   }

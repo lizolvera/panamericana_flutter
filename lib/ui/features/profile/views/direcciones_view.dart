@@ -65,31 +65,37 @@ class DireccionesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ShellScaffold(
+      titleText: 'Mis direcciones',
       fab: FloatingActionButton(
         onPressed: () => _abrirDialog(context, direccionesVm),
         tooltip: 'Agregar dirección',
         child: const Icon(Icons.add),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              'Mis direcciones',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 700),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Mis direcciones',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ),
+              Expanded(
+                child: ListenableBuilder(
+                  listenable: direccionesVm,
+                  builder: (context, _) => _cuerpo(context, direccionesVm),
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            child: ListenableBuilder(
-              listenable: direccionesVm,
-              builder: (context, _) => _cuerpo(context, direccionesVm),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

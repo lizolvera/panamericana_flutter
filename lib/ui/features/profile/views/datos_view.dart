@@ -66,6 +66,7 @@ class _DatosViewState extends State<DatosView> {
   @override
   Widget build(BuildContext context) {
     return ShellScaffold(
+      titleText: 'Datos personales',
       body: ListenableBuilder(
         listenable: _vm,
         builder: (context, _) {
@@ -88,11 +89,14 @@ class _DatosViewState extends State<DatosView> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 580),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                 Text(
                   'Datos personales',
                   style: Theme.of(context)
@@ -187,14 +191,16 @@ class _DatosViewState extends State<DatosView> {
                           )
                         : const Text('Guardar cambios'),
                   ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      );
-        },
       ),
+    );
+  },
+),
     );
   }
 }

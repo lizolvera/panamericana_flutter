@@ -9,12 +9,20 @@ import 'tab_index_notifier.dart';
 /// Inicio/Carrito/Perfil) persistentes en TODAS las vistas. Solo el
 /// contenido (`body`) cambia según la ruta/pestaña.
 class ShellScaffold extends StatelessWidget {
-  const ShellScaffold({super.key, required this.body, this.fab});
+  const ShellScaffold({
+    super.key,
+    required this.body,
+    this.fab,
+    this.titleText,
+  });
 
   final Widget body;
 
   /// Botón flotante opcional (p. ej. el "+" de direcciones).
   final Widget? fab;
+
+  /// Título opcional de la barra superior. Si es nulo, usa 'Panamericana'.
+  final String? titleText;
 
   void _cambiarPestana(
     BuildContext context,
@@ -39,7 +47,7 @@ class ShellScaffold extends StatelessWidget {
       appBar: AppBar(
         // Flecha de regreso cuando hay una ruta apilada; si no, sin leading.
         leading: Navigator.of(context).canPop() ? const BackButton() : null,
-        title: const Text('Panamericana'),
+        title: Text(titleText ?? 'Panamericana'),
         centerTitle: false,
         actions: [
           PopupMenuButton<String>(
@@ -48,14 +56,21 @@ class ShellScaffold extends StatelessWidget {
               switch (opcion) {
                 case 'inicio':
                   _cambiarPestana(context, tab, 0);
-                case 'carrito':
-                  _cambiarPestana(context, tab, 1);
+                case 'catalogo':
+                  Navigator.of(context).pushNamed('/catalogo');
                 case 'perfil':
                   if (auth.isCliente) {
-                    _cambiarPestana(context, tab, 2);
+                    _cambiarPestana(context, tab, 1);
                   } else {
-                    Navigator.of(context).pushNamed('/login');
+                    Navigator.of(context).pushNamed('/login').then((_) {
+                      if (context.mounted &&
+                          context.read<AuthViewModel>().isCliente) {
+                        _cambiarPestana(context, tab, 1);
+                      }
+                    });
                   }
+                case 'carrito':
+                  _cambiarPestana(context, tab, 2);
               }
             },
             itemBuilder: (_) => const [
@@ -67,17 +82,24 @@ class ShellScaffold extends StatelessWidget {
                 ),
               ),
               PopupMenuItem(
-                value: 'carrito',
+                value: 'catalogo',
                 child: ListTile(
-                  leading: Icon(Icons.shopping_cart_outlined),
-                  title: Text('Carrito'),
+                  leading: Icon(Icons.storefront_outlined),
+                  title: Text('Catálogo de productos'),
                 ),
               ),
               PopupMenuItem(
                 value: 'perfil',
                 child: ListTile(
                   leading: Icon(Icons.person_outline),
-                  title: Text('Perfil'),
+                  title: Text('Mi perfil'),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'carrito',
+                child: ListTile(
+                  leading: Icon(Icons.shopping_cart_outlined),
+                  title: Text('Carrito de compras'),
                 ),
               ),
             ],
@@ -87,11 +109,15 @@ class ShellScaffold extends StatelessWidget {
       body: body,
       floatingActionButton: fab,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: tab.indice,
+        selectedIndex: tab.indice.clamp(0, 2),
         onDestinationSelected: (i) {
           // El perfil exige sesión: si es invitado, primero a iniciar sesión.
-          if (i == 2 && !auth.isCliente) {
-            Navigator.of(context).pushNamed('/login');
+          if (i == 1 && !auth.isCliente) {
+            Navigator.of(context).pushNamed('/login').then((_) {
+              if (context.mounted && context.read<AuthViewModel>().isCliente) {
+                _cambiarPestana(context, tab, 1);
+              }
+            });
             return;
           }
           _cambiarPestana(context, tab, i);
@@ -101,6 +127,11 @@ class ShellScaffold extends StatelessWidget {
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
             label: 'Inicio',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Perfil',
           ),
           NavigationDestination(
             icon: Badge(
@@ -114,11 +145,6 @@ class ShellScaffold extends StatelessWidget {
               child: const Icon(Icons.shopping_cart),
             ),
             label: 'Carrito',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Perfil',
           ),
         ],
       ),
