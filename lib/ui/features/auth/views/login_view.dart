@@ -297,13 +297,11 @@ class _LoginViewState extends State<LoginView> {
                       ),
                       const SizedBox(height: 20),
                       // Botón "Continuar con Google"
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.rosaBeigeClaro),
+                      Center(
+                        child: googleSignInButton(
+                          context,
+                          () => _iniciarConGoogle(vm),
                         ),
-                        child:
-                            googleSignInButton(context, () => _iniciarConGoogle(vm)),
                       ),
                       const SizedBox(height: 24),
                       // Términos y privacidad

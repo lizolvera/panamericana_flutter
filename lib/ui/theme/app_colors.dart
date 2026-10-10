@@ -22,5 +22,6 @@ class AppColors {
   static const Color cafeOscuro = Color(0xFF291813);
 
   /// Fondo general cálido con tenue matiz rosado empolvado
-  static const Color fondoGeneral = Color(0xFFFBF8F7);
+  static const Color fondoGeneral = Color(0xFFF5ECEA);
+  static const Color superficieSuave = Color(0xFFF0DAD4);
 }

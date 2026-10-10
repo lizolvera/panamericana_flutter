@@ -496,11 +496,22 @@ class _BotonCerrarSesion extends StatelessWidget {
             ),
           );
           if (confirmar != true || !context.mounted) return;
-          context.read<CartViewModel>().limpiar();
-          await context.read<AuthViewModel>().logout();
+
+          final cart = context.read<CartViewModel>();
+          final auth = context.read<AuthViewModel>();
+          final tab = context.read<TabIndexNotifier>();
+          final navigator = Navigator.of(context);
+          final messenger = ScaffoldMessenger.of(context);
+
+          cart.limpiar();
+          await auth.logout();
           if (!context.mounted) return;
-          context.read<TabIndexNotifier>().indice = 0;
-          ScaffoldMessenger.of(context).showSnackBar(
+
+          tab.indice = 0;
+          navigator.popUntil((route) => route.isFirst);
+          navigator.pushNamed('/login');
+
+          messenger.showSnackBar(
             SnackBar(
               content: const Text('Sesión cerrada correctamente'),
               backgroundColor: AppColors.vino,

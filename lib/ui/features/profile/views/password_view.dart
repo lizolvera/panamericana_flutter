@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../theme/app_colors.dart';
 import '../../shell/shell_scaffold.dart';
 import '../view_models/profile_view_model.dart';
 
@@ -129,10 +130,13 @@ class _PasswordViewState extends State<PasswordView> {
                             : null,
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'La contraseña debe tener mínimo 12 caracteres e incluir '
                         'una mayúscula, un número y un símbolo.',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.cafeOscuro.withValues(alpha: 0.56),
+                        ),
                       ),
                       const SizedBox(height: 20),
                       FilledButton(

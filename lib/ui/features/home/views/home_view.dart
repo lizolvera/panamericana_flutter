@@ -12,7 +12,7 @@ import '../../../theme/app_colors.dart';
 
 /// **View principal**: usa la shell persistente (header + footer) y cambia
 /// el contenido según la pestaña activa.
-/// Tab 0 = Inicio (catálogo/landing), Tab 1 = Perfil, Tab 2 = Carrito.
+/// Tab 0 = Inicio (catálogo/landing), Tab 1 = Carrito, Tab 2 = Perfil.
 class HomeView extends StatelessWidget {
   const HomeView({super.key});
 
@@ -456,12 +456,11 @@ class _CarritoView extends StatelessWidget {
                   ),
                   const Divider(height: 1, color: AppColors.rosaBeigeClaro),
                   // Lista de productos
-                  ...cart.items
-                      .map((item) => _CartItemTile(item: item)),
-                  const SizedBox(height: 16),
+                  ...cart.items.map((item) => _CartItemTile(item: item)),
+                  const SizedBox(height: 12),
                   // Resumen del pedido (Boceto 2: subtotal, envío, impuestos, total)
                   _ResumenPedido(cart: cart),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
@@ -604,115 +603,139 @@ class _CartItemTile extends StatelessWidget {
 
     return Container(
       color: AppColors.blancoCalido,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Imagen cuadrada redondeada
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: SizedBox(
-              width: 60,
-              height: 60,
-              child: (producto.imagenUrl != null &&
-                      producto.imagenUrl!.isNotEmpty)
-                  ? Image.network(
-                      producto.imagenUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _placeholder(),
-                    )
-                  : _placeholder(),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.blancoCalido,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: SizedBox(
+                width: 64,
+                height: 76,
+                child: (producto.imagenUrl != null &&
+                        producto.imagenUrl!.isNotEmpty)
+                    ? Image.network(
+                        producto.imagenUrl!,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, _, _) => _placeholder(),
+                      )
+                    : _placeholder(),
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          // Descripción
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (producto.marca != null &&
-                    producto.marca!.nombre.isNotEmpty)
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (producto.marca != null &&
+                                producto.marca!.nombre.isNotEmpty)
+                              Text(
+                                producto.marca!.nombre,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.terracota,
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+                            Text(
+                              producto.nombre,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                height: 1.15,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.cafeOscuro,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '\$${(precio * item.cantidad).toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                          color: AppColors.vinoOscuro,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
                   Text(
-                    producto.marca!.nombre,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.terracota,
-                      letterSpacing: 0.5,
+                    '\$${precio.toStringAsFixed(2)} c/u',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.cafeOscuro.withValues(alpha: 0.55),
                     ),
                   ),
-                Text(
-                  producto.nombre,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.cafeOscuro,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '\$${precio.toStringAsFixed(2)} c/u',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.cafeOscuro.withValues(alpha: 0.55),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                // Controles de cantidad
-                Row(
-                  children: [
-                    _QtyButton(
-                      icon: Icons.remove,
-                      onTap: id == null ? null : () => cart.decrementar(id),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${item.cantidad}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: AppColors.cafeOscuro,
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _QtyButton(
+                        icon: Icons.remove,
+                        onTap: id == null ? null : () => cart.decrementar(id),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    _QtyButton(
-                      icon: Icons.add,
-                      onTap: id == null ? null : () => cart.incrementar(id),
-                    ),
-                    const Spacer(),
-                    // Eliminar ítem
-                    GestureDetector(
-                      onTap: id == null ? null : () => cart.eliminar(id),
-                      child: const Icon(
-                        Icons.delete_outline,
-                        size: 18,
-                        color: AppColors.terracota,
+                      SizedBox(
+                        width: 26,
+                        child: Text(
+                          '${item.cantidad}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: AppColors.cafeOscuro,
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      _QtyButton(
+                        icon: Icons.add,
+                        onTap: id == null ? null : () => cart.incrementar(id),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: id == null ? null : () => cart.eliminar(id),
+                        visualDensity: VisualDensity.compact,
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          size: 19,
+                          color: AppColors.terracota,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          // Precio total del ítem
-          Text(
-            '\$${(precio * item.cantidad).toStringAsFixed(2)}',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              color: AppColors.vinoOscuro,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _placeholder() => Container(
-        color: AppColors.rosaBeigeClaro,
+        color: AppColors.superficieSuave,
         child: const Icon(Icons.inventory_2,
             size: 28, color: AppColors.terracota),
       );
@@ -728,21 +751,23 @@ class _QtyButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 26,
-        height: 26,
+        width: 28,
+        height: 28,
         decoration: BoxDecoration(
           color: onTap != null
               ? AppColors.rosaBeigeClaro
               : AppColors.rosaBeigeClaro.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(7),
           border: Border.all(color: AppColors.rosaNude.withValues(alpha: 0.5)),
         ),
-        child: Icon(
-          icon,
-          size: 16,
-          color: onTap != null
-              ? AppColors.vino
-              : AppColors.cafeOscuro.withValues(alpha: 0.3),
+        child: Center(
+          child: Icon(
+            icon,
+            size: 15,
+            color: onTap != null
+                ? AppColors.vino
+                : AppColors.cafeOscuro.withValues(alpha: 0.3),
+          ),
         ),
       ),
     );
@@ -767,7 +792,7 @@ class _ResumenPedido extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.blancoCalido,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.rosaBeigeClaro),
         boxShadow: [
           BoxShadow(
@@ -818,13 +843,17 @@ class _ResumenPedido extends StatelessWidget {
                   color: AppColors.cafeOscuro,
                 ),
               ),
-              const Spacer(),
-              Text(
-                '\$${total.toStringAsFixed(2)} pesos',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.vinoOscuro,
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  '\$${total.toStringAsFixed(2)}',
+                  textAlign: TextAlign.right,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.vinoOscuro,
+                  ),
                 ),
               ),
             ],

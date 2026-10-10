@@ -25,8 +25,8 @@ class CatalogRepository {
     final res = await _dio.get(
       '/api/productos',
       queryParameters: {
-        'marca': ?marca,
-        'familia': ?familia,
+        if (marca != null && marca.isNotEmpty) 'marca': marca,
+        if (familia != null && familia.isNotEmpty) 'familia': familia,
         if (nombre != null && nombre.isNotEmpty) 'nombre': nombre,
       },
     );
@@ -55,7 +55,9 @@ class CatalogRepository {
   Future<List<Familia>> getFamilias({String? marca}) async {
     final res = await _dio.get(
       '/api/familias',
-      queryParameters: {'marca': ?marca},
+      queryParameters: {
+        if (marca != null && marca.isNotEmpty) 'marca': marca,
+      },
     );
     final data = res.data as List<dynamic>;
     return data

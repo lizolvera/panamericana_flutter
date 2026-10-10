@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../theme/app_colors.dart';
+
 /// Botón de Material para plataformas no-web (Android/iOS/desktop).
 /// Llama al flujo de `authenticate()` del AuthViewModel.
 Widget buildGoogleSignInButton(
@@ -18,7 +20,12 @@ Widget buildGoogleSignInButton(
     ),
     label: const Text('Continuar con Google'),
     style: OutlinedButton.styleFrom(
-      minimumSize: const Size.fromHeight(48),
+      minimumSize: const Size(230, 44),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+      foregroundColor: AppColors.cafeOscuro,
+      side: const BorderSide(color: AppColors.rosaBeigeClaro),
+      backgroundColor: AppColors.blancoCalido,
+      shape: const StadiumBorder(),
     ),
   );
 }

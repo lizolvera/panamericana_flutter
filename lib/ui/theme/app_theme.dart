@@ -25,26 +25,59 @@ class AppTheme {
         error: AppColors.vinoOscuro,
         onError: AppColors.blancoCalido,
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.blancoCalido,
-        foregroundColor: AppColors.cafeOscuro,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        centerTitle: false,
-        iconTheme: IconThemeData(color: AppColors.cafeOscuro),
-        titleTextStyle: TextStyle(
+      fontFamily: 'Roboto',
+      textTheme: const TextTheme(
+        headlineMedium: TextStyle(
           color: AppColors.cafeOscuro,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0,
+        ),
+        headlineSmall: TextStyle(
+          color: AppColors.cafeOscuro,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0,
+        ),
+        titleLarge: TextStyle(
+          color: AppColors.cafeOscuro,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0,
+        ),
+        titleMedium: TextStyle(
+          color: AppColors.cafeOscuro,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0,
+        ),
+        bodyMedium: TextStyle(
+          color: AppColors.cafeOscuro,
+          height: 1.35,
+          letterSpacing: 0,
+        ),
+        bodySmall: TextStyle(
+          color: AppColors.cafeOscuro,
+          height: 1.3,
+          letterSpacing: 0,
+        ),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AppColors.vinoOscuro,
+        foregroundColor: AppColors.blancoCalido,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        iconTheme: IconThemeData(color: AppColors.blancoCalido),
+        titleTextStyle: TextStyle(
+          color: AppColors.blancoCalido,
           fontSize: 19,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 0.3,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0,
         ),
       ),
       cardTheme: CardThemeData(
         color: AppColors.blancoCalido,
-        elevation: 1,
-        shadowColor: AppColors.cafeOscuro.withValues(alpha: 0.08),
+        elevation: 3,
+        shadowColor: AppColors.cafeOscuro.withValues(alpha: 0.12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           side: const BorderSide(color: AppColors.rosaBeigeClaro, width: 0.8),
         ),
       ),
@@ -52,7 +85,8 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.vino,
           foregroundColor: AppColors.blancoCalido,
-          elevation: 1.5,
+          elevation: 2,
+          shadowColor: AppColors.vinoOscuro.withValues(alpha: 0.22),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -86,6 +120,14 @@ class AppTheme {
           ),
         ),
       ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: AppColors.vino,
+        foregroundColor: AppColors.blancoCalido,
+        elevation: 3,
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.vino,
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.blancoCalido,
@@ -107,7 +149,7 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.blancoCalido,
-        indicatorColor: AppColors.rosaBeigeClaro.withValues(alpha: 0.7),
+        indicatorColor: AppColors.rosaBeigeClaro,
         elevation: 3,
         shadowColor: AppColors.cafeOscuro.withValues(alpha: 0.1),
         iconTheme: WidgetStateProperty.resolveWith((states) {

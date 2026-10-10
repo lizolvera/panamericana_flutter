@@ -49,62 +49,6 @@ class ShellScaffold extends StatelessWidget {
         leading: Navigator.of(context).canPop() ? const BackButton() : null,
         title: Text(titleText ?? 'Panamericana'),
         centerTitle: false,
-        actions: [
-          PopupMenuButton<String>(
-            tooltip: 'Menú',
-            onSelected: (opcion) {
-              switch (opcion) {
-                case 'inicio':
-                  _cambiarPestana(context, tab, 0);
-                case 'catalogo':
-                  Navigator.of(context).pushNamed('/catalogo');
-                case 'perfil':
-                  if (auth.isCliente) {
-                    _cambiarPestana(context, tab, 1);
-                  } else {
-                    Navigator.of(context).pushNamed('/login').then((_) {
-                      if (context.mounted &&
-                          context.read<AuthViewModel>().isCliente) {
-                        _cambiarPestana(context, tab, 1);
-                      }
-                    });
-                  }
-                case 'carrito':
-                  _cambiarPestana(context, tab, 2);
-              }
-            },
-            itemBuilder: (_) => const [
-              PopupMenuItem(
-                value: 'inicio',
-                child: ListTile(
-                  leading: Icon(Icons.home_outlined),
-                  title: Text('Inicio'),
-                ),
-              ),
-              PopupMenuItem(
-                value: 'catalogo',
-                child: ListTile(
-                  leading: Icon(Icons.storefront_outlined),
-                  title: Text('Catálogo de productos'),
-                ),
-              ),
-              PopupMenuItem(
-                value: 'perfil',
-                child: ListTile(
-                  leading: Icon(Icons.person_outline),
-                  title: Text('Mi perfil'),
-                ),
-              ),
-              PopupMenuItem(
-                value: 'carrito',
-                child: ListTile(
-                  leading: Icon(Icons.shopping_cart_outlined),
-                  title: Text('Carrito de compras'),
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
       body: body,
       floatingActionButton: fab,
@@ -112,10 +56,10 @@ class ShellScaffold extends StatelessWidget {
         selectedIndex: tab.indice.clamp(0, 2),
         onDestinationSelected: (i) {
           // El perfil exige sesión: si es invitado, primero a iniciar sesión.
-          if (i == 1 && !auth.isCliente) {
+          if (i == 2 && !auth.isCliente) {
             Navigator.of(context).pushNamed('/login').then((_) {
               if (context.mounted && context.read<AuthViewModel>().isCliente) {
-                _cambiarPestana(context, tab, 1);
+                _cambiarPestana(context, tab, 2);
               }
             });
             return;
@@ -127,11 +71,6 @@ class ShellScaffold extends StatelessWidget {
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
             label: 'Inicio',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Perfil',
           ),
           NavigationDestination(
             icon: Badge(
@@ -145,6 +84,11 @@ class ShellScaffold extends StatelessWidget {
               child: const Icon(Icons.shopping_cart),
             ),
             label: 'Carrito',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Perfil',
           ),
         ],
       ),

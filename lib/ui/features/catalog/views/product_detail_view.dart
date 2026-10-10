@@ -7,6 +7,7 @@ import '../../auth/view_models/auth_view_model.dart';
 import '../../cart/view_models/cart_view_model.dart';
 import '../../shell/shell_scaffold.dart';
 import '../../shell/tab_index_notifier.dart';
+import '../../../theme/app_colors.dart';
 import '../view_models/product_detail_view_model.dart';
 
 /// **View del detalle de producto** (vista invitado).
@@ -89,7 +90,11 @@ class _ProductDetailBody extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.cloud_off, size: 48, color: Colors.grey),
+              const Icon(
+                Icons.cloud_off,
+                size: 48,
+                color: AppColors.terracota,
+              ),
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -313,7 +318,7 @@ class _DetalleState extends State<_Detalle> with SingleTickerProviderStateMixin 
                       '\$${(producto.precioNormal ?? 0).toStringAsFixed(2)}',
                       style: theme.textTheme.titleMedium?.copyWith(
                         decoration: TextDecoration.lineThrough,
-                        color: Colors.grey,
+                        color: AppColors.cafeOscuro.withValues(alpha: 0.42),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -321,14 +326,15 @@ class _DetalleState extends State<_Detalle> with SingleTickerProviderStateMixin 
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.errorContainer,
+                        color: AppColors.rosaBeigeClaro,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         'OFERTA ${producto.ofertaAplicada!.nombre}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
-                          color: theme.colorScheme.onErrorContainer,
+                          color: AppColors.vinoOscuro,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
@@ -382,6 +388,10 @@ class _DetalleState extends State<_Detalle> with SingleTickerProviderStateMixin 
               const SizedBox(height: 4),
               Text(
                 producto.descripcion ?? 'Sin descripción disponible.',
+                style: TextStyle(
+                  color: AppColors.cafeOscuro.withValues(alpha: 0.7),
+                  height: 1.45,
+                ),
               ),
             ],
           ),
@@ -437,18 +447,30 @@ class _DetalleState extends State<_Detalle> with SingleTickerProviderStateMixin 
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(etiqueta, style: const TextStyle(color: Colors.grey)),
+            Text(
+              etiqueta,
+              style: TextStyle(
+                color: AppColors.cafeOscuro.withValues(alpha: 0.55),
+              ),
+            ),
             Text(
               valor,
-              style: const TextStyle(fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.cafeOscuro,
+              ),
             ),
           ],
         ),
       );
 
   Widget _placeholder() => Container(
-        color: Colors.grey.shade200,
-        child: const Icon(Icons.inventory_2, size: 64),
+        color: AppColors.rosaBeigeClaro.withValues(alpha: 0.55),
+        child: const Icon(
+          Icons.content_cut,
+          size: 64,
+          color: AppColors.terracota,
+        ),
       );
 }
 
@@ -521,8 +543,12 @@ class _ProductoMiniCard extends StatelessWidget {
   }
 
   Widget _placeholderMini() => Container(
-        color: Colors.grey.shade200,
-        child: const Icon(Icons.inventory_2, size: 28),
+        color: AppColors.rosaBeigeClaro.withValues(alpha: 0.55),
+        child: const Icon(
+          Icons.content_cut,
+          size: 28,
+          color: AppColors.terracota,
+        ),
       );
 }
 
@@ -535,18 +561,48 @@ class _BarraCompra extends StatelessWidget {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Agregado: ${producto.nombre}'),
-        duration: const Duration(seconds: 4),
-        action: SnackBarAction(
-          label: 'VER CARRITO',
-          textColor: Colors.amberAccent,
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).popUntil((r) => r.isFirst);
-            }
-            context.read<TabIndexNotifier>().indice = 1;
-          },
+        content: Row(
+          children: [
+            const Icon(
+              Icons.check_circle,
+              color: AppColors.rosaBeigeClaro,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Agregado: ${producto.nombre}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).popUntil((r) => r.isFirst);
+                }
+                context.read<TabIndexNotifier>().indice = 1;
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.rosaBeigeClaro,
+                minimumSize: const Size(40, 32),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              child: const Text('Ver'),
+            ),
+          ],
         ),
+        duration: const Duration(milliseconds: 1700),
+        backgroundColor: AppColors.vino,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.fromLTRB(18, 0, 18, 84),
+        padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -559,7 +615,7 @@ class _BarraCompra extends StatelessWidget {
 
     return Material(
       elevation: 4,
-      color: Theme.of(context).scaffoldBackgroundColor,
+      color: AppColors.blancoCalido,
       child: SafeArea(
         top: false,
         child: Padding(

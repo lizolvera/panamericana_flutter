@@ -9,6 +9,7 @@ import '../../../../domain/models/marca.dart';
 import '../../../../domain/models/producto.dart';
 import '../../../theme/app_colors.dart';
 import '../../cart/view_models/cart_view_model.dart';
+import '../../shell/tab_index_notifier.dart';
 import '../view_models/catalog_view_model.dart';
 import '../../shell/shell_scaffold.dart';
 import 'product_detail_view.dart';
@@ -213,7 +214,11 @@ class _CatalogoCargado extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.search_off, size: 48, color: Colors.grey),
+                      const Icon(
+                        Icons.search_off,
+                        size: 48,
+                        color: AppColors.terracota,
+                      ),
                       const SizedBox(height: 8),
                       const Text(
                         'No hay productos que coincidan con la búsqueda o filtro',
@@ -484,7 +489,10 @@ class _BannerCarrusel extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 14),
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Colors.transparent, Colors.black54],
+                        colors: [
+                          Color(0x007E2F31),
+                          Color(0xCC5F1618),
+                        ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
@@ -492,12 +500,12 @@ class _BannerCarrusel extends StatelessWidget {
                     child: Text(
                       carrusel.titulo!,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.blancoCalido,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                         shadows: [
                           Shadow(
-                            color: Colors.black45,
+                            color: AppColors.vinoOscuro,
                             blurRadius: 4,
                           ),
                         ],
@@ -544,7 +552,7 @@ class _DestacadosState extends State<_Destacados>
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 270,
+      height: 292,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -585,7 +593,7 @@ class _TarjetaDestacado extends StatelessWidget {
     final tieneOferta = producto.ofertaAplicada != null;
 
     return SizedBox(
-      width: 190,
+      width: 194,
       child: Card(
         clipBehavior: Clip.antiAlias,
         color: AppColors.blancoCalido,
@@ -593,94 +601,27 @@ class _TarjetaDestacado extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           side: const BorderSide(color: AppColors.rosaBeigeClaro, width: 0.8),
         ),
-        elevation: 2,
-        shadowColor: AppColors.cafeOscuro.withValues(alpha: 0.08),
+        elevation: 4,
+        shadowColor: AppColors.cafeOscuro.withValues(alpha: 0.14),
         child: InkWell(
           onTap: () => _abrirDetalle(context, producto),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Imagen con badge de oferta
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(14)),
-                    child: AspectRatio(
-                      aspectRatio: 1,
-                      child: (producto.imagenUrl != null &&
-                              producto.imagenUrl!.isNotEmpty)
-                          ? Image.network(
-                              producto.imagenUrl!,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              errorBuilder: (_, _, _) => _placeholderImagen(),
-                            )
-                          : _placeholderImagen(),
-                    ),
-                  ),
-                  if (tieneOferta)
-                    Positioned(
-                      top: 8,
-                      left: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: AppColors.vino,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text(
-                          'OFERTA',
-                          style: TextStyle(
-                            color: AppColors.blancoCalido,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+              Expanded(
+                flex: 5,
+                child: _ProductImageArea(
+                  producto: producto,
+                  tieneOferta: tieneOferta,
+                  badgeFontSize: 9,
+                ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (producto.marca != null &&
-                        producto.marca!.nombre.isNotEmpty)
-                      Text(
-                        producto.marca!.nombre,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.terracota,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    Text(
-                      producto.nombre,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.cafeOscuro,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '\$${precio.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: AppColors.vinoOscuro,
-                      ),
-                    ),
-                  ],
+              Expanded(
+                flex: 4,
+                child: _ProductInfoArea(
+                  producto: producto,
+                  precio: precio,
+                  maxNombreLines: 2,
                 ),
               ),
             ],
@@ -700,22 +641,22 @@ SliverGridDelegate _calcularGridDelegate(BuildContext context) {
 
   if (width >= 900) {
     crossAxisCount = 4;
-    childAspectRatio = 0.78;
+    childAspectRatio = 0.72;
   } else if (width >= 600) {
     crossAxisCount = 3;
-    childAspectRatio = 0.74;
+    childAspectRatio = 0.68;
   } else if (width < 360) {
     crossAxisCount = 2;
-    childAspectRatio = 0.67;
+    childAspectRatio = 0.60;
   } else {
     crossAxisCount = 2;
-    childAspectRatio = 0.71;
+    childAspectRatio = 0.62;
   }
 
   return SliverGridDelegateWithFixedCrossAxisCount(
     crossAxisCount: crossAxisCount,
-    mainAxisSpacing: 12,
-    crossAxisSpacing: 12,
+    mainAxisSpacing: 10,
+    crossAxisSpacing: 10,
     childAspectRatio: childAspectRatio,
   );
 }
@@ -900,7 +841,9 @@ class _Paginacion extends StatelessWidget {
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
-                ?.copyWith(color: Colors.grey),
+                ?.copyWith(
+                  color: AppColors.cafeOscuro.withValues(alpha: 0.55),
+                ),
           ),
         ),
         const SizedBox(height: 6),
@@ -1070,7 +1013,7 @@ class _GrillaState extends State<_Grilla> with SingleTickerProviderStateMixin {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
       gridDelegate: _calcularGridDelegate(context),
       itemCount: widget.productos.length,
       itemBuilder: (context, i) {
@@ -1114,145 +1057,252 @@ class _ProductCard extends StatelessWidget {
         side: const BorderSide(color: AppColors.rosaBeigeClaro, width: 0.8),
       ),
       elevation: 2,
-      shadowColor: AppColors.cafeOscuro.withValues(alpha: 0.08),
+      shadowColor: AppColors.cafeOscuro.withValues(alpha: 0.14),
       child: InkWell(
         onTap: () => _abrirDetalle(context, producto),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Imagen con overlay de oferta
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(14)),
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: _imagenConHero(producto),
-                  ),
-                ),
-                if (tieneOferta)
-                  Positioned(
-                    top: 6,
-                    left: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppColors.vino,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        'OFERTA',
-                        style: TextStyle(
-                          color: AppColors.blancoCalido,
-                          fontSize: 8,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
+            Expanded(
+              flex: 6,
+              child: _ProductImageArea(
+                producto: producto,
+                tieneOferta: tieneOferta,
+                badgeFontSize: 8,
+              ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            Expanded(
+              flex: 5,
+              child: _ProductInfoArea(
+                producto: producto,
+                precio: precio,
+                maxNombreLines: 2,
+                bottom: _AddToCartButton(
+                  producto: producto,
+                  cart: cart,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductImageArea extends StatelessWidget {
+  const _ProductImageArea({
+    required this.producto,
+    required this.tieneOferta,
+    required this.badgeFontSize,
+  });
+
+  final Producto producto;
+  final bool tieneOferta;
+  final double badgeFontSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Container(
+          color: AppColors.superficieSuave.withValues(alpha: 0.45),
+          padding: const EdgeInsets.all(6),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+            child: _imagenConHero(producto),
+          ),
+        ),
+        if (tieneOferta)
+          Positioned(
+            top: 8,
+            left: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.vino,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                'OFERTA',
+                style: TextStyle(
+                  color: AppColors.blancoCalido,
+                  fontSize: badgeFontSize,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _ProductInfoArea extends StatelessWidget {
+  const _ProductInfoArea({
+    required this.producto,
+    required this.precio,
+    required this.maxNombreLines,
+    this.bottom,
+  });
+
+  final Producto producto;
+  final double precio;
+  final int maxNombreLines;
+  final Widget? bottom;
+
+  @override
+  Widget build(BuildContext context) {
+    final tieneOferta = producto.ofertaAplicada != null;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(9, 7, 9, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (producto.marca != null && producto.marca!.nombre.isNotEmpty)
+            Text(
+              producto.marca!.nombre,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: AppColors.terracota,
+                letterSpacing: 0.2,
+              ),
+            ),
+          Text(
+            producto.nombre,
+            maxLines: maxNombreLines,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.cafeOscuro,
+            ),
+          ),
+          const SizedBox(height: 4),
+          if (tieneOferta) ...[
+            Text(
+              '\$${(producto.precioNormal ?? 0).toStringAsFixed(2)}',
+              style: TextStyle(
+                decoration: TextDecoration.lineThrough,
+                color: AppColors.cafeOscuro.withValues(alpha: 0.4),
+                fontSize: 10,
+              ),
+            ),
+            Text(
+              '\$${precio.toStringAsFixed(2)}',
+              style: const TextStyle(
+                color: AppColors.vinoOscuro,
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+              ),
+            ),
+          ] else
+            Text(
+              '\$${precio.toStringAsFixed(2)}',
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+                color: AppColors.cafeOscuro,
+              ),
+            ),
+          if (bottom != null) ...[
+            const SizedBox(height: 5),
+            const Spacer(),
+            bottom!,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _AddToCartButton extends StatelessWidget {
+  const _AddToCartButton({
+    required this.producto,
+    required this.cart,
+  });
+
+  final Producto producto;
+  final CartViewModel cart;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.vino,
+          foregroundColor: AppColors.blancoCalido,
+          minimumSize: const Size.fromHeight(30),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+        ),
+        onPressed: () {
+          cart.agregar(producto);
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
                 children: [
-                  if (producto.marca != null &&
-                      producto.marca!.nombre.isNotEmpty)
-                    Text(
-                      producto.marca!.nombre,
+                  const Icon(
+                    Icons.check_circle,
+                    color: AppColors.rosaBeigeClaro,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${producto.nombre} añadido',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 10,
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.terracota,
-                        letterSpacing: 0.3,
                       ),
-                    ),
-                  Text(
-                    producto.nombre,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.cafeOscuro,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  if (tieneOferta) ...[
-                    Text(
-                      '\$${(producto.precioNormal ?? 0).toStringAsFixed(2)}',
-                      style: TextStyle(
-                        decoration: TextDecoration.lineThrough,
-                        color: AppColors.cafeOscuro.withValues(alpha: 0.4),
-                        fontSize: 10,
-                      ),
+                  TextButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).popUntil((r) => r.isFirst);
+                      }
+                      context.read<TabIndexNotifier>().indice = 1;
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.rosaBeigeClaro,
+                      minimumSize: const Size(40, 32),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
                     ),
-                    Text(
-                      '\$${precio.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        color: AppColors.vinoOscuro,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ] else
-                    Text(
-                      '\$${precio.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                        color: AppColors.cafeOscuro,
-                      ),
-                    ),
+                    child: const Text('Ver'),
+                  ),
                 ],
               ),
-            ),
-            // Botón "Añadir"
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.vino,
-                    foregroundColor: AppColors.blancoCalido,
-                    minimumSize: const Size.fromHeight(32),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    padding: EdgeInsets.zero,
-                  ),
-                  onPressed: () {
-                    cart.agregar(producto);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          '${producto.nombre} añadido',
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                        backgroundColor: AppColors.vino,
-                        duration: const Duration(seconds: 1),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    );
-                  },
-                  child: const Text('Añadir'),
-                ),
+              backgroundColor: AppColors.vino,
+              duration: const Duration(milliseconds: 1500),
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.fromLTRB(18, 0, 18, 84),
+              padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
+          );
+        },
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_shopping_cart, size: 15),
+            SizedBox(width: 5),
+            Text('Añadir'),
           ],
         ),
       ),
@@ -1411,8 +1461,9 @@ Widget _imagenConHero(Producto producto) {
   final imagen = (producto.imagenUrl != null && producto.imagenUrl!.isNotEmpty)
       ? Image.network(
           producto.imagenUrl!,
-          fit: BoxFit.cover,
+          fit: BoxFit.contain,
           width: double.infinity,
+          height: double.infinity,
           errorBuilder: (_, _, _) => _placeholderImagen(),
         )
       : _placeholderImagen();

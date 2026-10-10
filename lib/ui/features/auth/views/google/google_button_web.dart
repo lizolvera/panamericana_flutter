@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_sign_in_web/web_only.dart';
 
+import '../../../../theme/app_colors.dart';
 import 'google_init.dart';
 
 /// Botón oficial de Google (GIS) para web.
@@ -39,13 +40,16 @@ class _GoogleButtonWebState extends State<_GoogleButtonWeb> {
             'No se pudo cargar Google Sign-In.\n'
             'Revisa la consola (client_id o red).',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.cafeOscuro.withValues(alpha: 0.58),
+            ),
           );
         }
         return renderButton(
           configuration: GSIButtonConfiguration(
             type: GSIButtonType.standard,
-            theme: GSIButtonTheme.filledBlue,
+            theme: GSIButtonTheme.outline,
             size: GSIButtonSize.large,
             text: GSIButtonText.continueWith,
             shape: GSIButtonShape.pill,

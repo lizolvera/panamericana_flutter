@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../domain/models/direccion.dart';
+import '../../../theme/app_colors.dart';
 import '../../shell/shell_scaffold.dart';
 import '../view_models/direcciones_view_model.dart';
 
@@ -109,7 +110,11 @@ class DireccionesView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.cloud_off, size: 48, color: Colors.grey),
+              const Icon(
+                Icons.cloud_off,
+                size: 48,
+                color: AppColors.terracota,
+              ),
               const SizedBox(height: 8),
               Text(vm.error ?? 'Error al cargar direcciones'),
               const SizedBox(height: 12),
