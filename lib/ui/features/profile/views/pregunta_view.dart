@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../../../shared/form_validators.dart';
 import '../../shell/shell_scaffold.dart';
 import '../view_models/profile_view_model.dart';
 
@@ -107,13 +109,20 @@ class _PreguntaViewState extends State<PreguntaView> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _respuestaCtrl,
+                    textCapitalization: TextCapitalization.sentences,
+                    inputFormatters: [
+                      LengthLimitingTextInputFormatter(80),
+                    ],
                     decoration: const InputDecoration(
                       labelText: 'Respuesta secreta',
                       border: OutlineInputBorder(),
                     ),
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'La respuesta es obligatoria'
-                        : null,
+                    validator: (v) => FormValidators.requiredText(
+                      v,
+                      'La respuesta',
+                      min: 3,
+                      max: 80,
+                    ),
                   ),
                   const SizedBox(height: 20),
                   FilledButton(

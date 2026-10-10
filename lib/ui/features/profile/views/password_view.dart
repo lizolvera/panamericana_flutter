@@ -125,9 +125,14 @@ class _PasswordViewState extends State<PasswordView> {
                           labelText: 'Confirmar nueva contraseña',
                           border: OutlineInputBorder(),
                         ),
-                        validator: (v) => (v != _newCtrl.text)
-                            ? 'Las contraseñas no coinciden'
-                            : null,
+                        validator: (v) {
+                          if (v == null || v.isEmpty) {
+                            return 'Confirma tu nueva contraseña';
+                          }
+                          return v != _newCtrl.text
+                              ? 'Las contraseñas no coinciden'
+                              : null;
+                        },
                       ),
                       const SizedBox(height: 8),
                       Text(

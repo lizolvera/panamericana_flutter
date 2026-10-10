@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../theme/app_colors.dart';
+import '../../../shared/form_validators.dart';
 import '../../shell/shell_scaffold.dart';
 import 'google/google_button.dart';
 import '../view_models/auth_view_model.dart';
@@ -169,6 +171,8 @@ class _LoginViewState extends State<LoginView> {
                       TextFormField(
                         controller: _emailCtrl,
                         keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.email],
                         decoration: InputDecoration(
                           hintText: 'Email @ Panamericana.com',
                           prefixIcon: const Icon(
@@ -193,15 +197,15 @@ class _LoginViewState extends State<LoginView> {
                                 color: AppColors.vino, width: 1.5),
                           ),
                         ),
-                        validator: (v) => (v == null || !v.contains('@'))
-                            ? 'Correo inválido'
-                            : null,
+                        validator: FormValidators.requiredEmail,
                       ),
                       const SizedBox(height: 14),
                       // Campo contraseña / 2FA
                       TextFormField(
                         controller: _passwordCtrl,
                         obscureText: !_passwordVisible,
+                        textInputAction: TextInputAction.done,
+                        autofillHints: const [AutofillHints.password],
                         decoration: InputDecoration(
                           hintText: 'Contraseña',
                           prefixIcon: const Icon(
@@ -370,6 +374,10 @@ class _LoginViewState extends State<LoginView> {
                       TextFormField(
                         controller: _codeCtrl,
                         keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FormValidators.digitsOnlyFormatter,
+                          LengthLimitingTextInputFormatter(6),
+                        ],
                         maxLength: 6,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
@@ -397,6 +405,12 @@ class _LoginViewState extends State<LoginView> {
                             borderSide: const BorderSide(
                                 color: AppColors.vino, width: 1.5),
                           ),
+                        ),
+                        validator: (v) =>
+                            FormValidators.requiredDigits(
+                          v,
+                          'El código',
+                          length: 6,
                         ),
                       ),
                       const SizedBox(height: 20),

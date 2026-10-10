@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../domain/models/direccion.dart';
+import '../../../shared/form_validators.dart';
 import '../../../theme/app_colors.dart';
 import '../../shell/shell_scaffold.dart';
 import '../view_models/direcciones_view_model.dart';
@@ -313,40 +315,64 @@ class _DialogDireccionState extends State<_DialogDireccion> {
             children: [
               TextFormField(
                 controller: _aliasCtrl,
+                textCapitalization: TextCapitalization.words,
+                inputFormatters: [
+                  FormValidators.addressFormatter,
+                  LengthLimitingTextInputFormatter(40),
+                ],
                 decoration: const InputDecoration(labelText: 'Alias (ej. Casa)'),
-                validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Obligatorio'
-                    : null,
+                validator: (v) =>
+                    FormValidators.requiredAddressText(v, 'El alias'),
               ),
               TextFormField(
                 controller: _calleCtrl,
+                textCapitalization: TextCapitalization.words,
+                inputFormatters: [
+                  FormValidators.addressFormatter,
+                  LengthLimitingTextInputFormatter(100),
+                ],
                 decoration: const InputDecoration(labelText: 'Calle'),
                 validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Obligatorio' : null,
+                    FormValidators.requiredAddressText(v, 'La calle'),
               ),
               TextFormField(
                 controller: _coloniaCtrl,
+                textCapitalization: TextCapitalization.words,
+                inputFormatters: [
+                  FormValidators.addressFormatter,
+                  LengthLimitingTextInputFormatter(80),
+                ],
                 decoration: const InputDecoration(labelText: 'Colonia'),
+                validator: (v) =>
+                    FormValidators.optionalAddressText(v, 'La colonia'),
               ),
               Row(
                 children: [
                   Expanded(
                     child: TextFormField(
                       controller: _ciudadCtrl,
+                      textCapitalization: TextCapitalization.words,
+                      inputFormatters: [
+                        FormValidators.lettersOnlyFormatter,
+                        LengthLimitingTextInputFormatter(60),
+                      ],
                       decoration: const InputDecoration(labelText: 'Ciudad'),
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'Obligatorio'
-                          : null,
+                      validator: (v) =>
+                          FormValidators.requiredLetters(v, 'La ciudad'),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextFormField(
                       controller: _estadoCtrl,
+                      textCapitalization: TextCapitalization.words,
+                      inputFormatters: [
+                        FormValidators.lettersOnlyFormatter,
+                        LengthLimitingTextInputFormatter(60),
+                      ],
                       decoration: const InputDecoration(labelText: 'Estado'),
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'Obligatorio'
-                          : null,
+                      validator: (v) =>
+                          FormValidators.requiredLetters(v, 'El estado'),
                     ),
                   ),
                 ],
@@ -356,10 +382,13 @@ class _DialogDireccionState extends State<_DialogDireccion> {
                   Expanded(
                     child: TextFormField(
                       controller: _cpCtrl,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FormValidators.digitsOnlyFormatter,
+                        LengthLimitingTextInputFormatter(5),
+                      ],
                       decoration: const InputDecoration(labelText: 'CP'),
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'Obligatorio'
-                          : null,
+                      validator: FormValidators.requiredPostalCode,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -367,17 +396,26 @@ class _DialogDireccionState extends State<_DialogDireccion> {
                     child: TextFormField(
                       controller: _telefonoCtrl,
                       keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FormValidators.digitsOnlyFormatter,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
                       decoration: const InputDecoration(labelText: 'Teléfono'),
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'Obligatorio'
-                          : null,
+                      validator: FormValidators.requiredPhone,
                     ),
                   ),
                 ],
               ),
               TextFormField(
                 controller: _refsCtrl,
+                textCapitalization: TextCapitalization.sentences,
+                inputFormatters: [
+                  FormValidators.addressFormatter,
+                  LengthLimitingTextInputFormatter(120),
+                ],
                 decoration: const InputDecoration(labelText: 'Referencias'),
+                validator: (v) =>
+                    FormValidators.optionalAddressText(v, 'Las referencias'),
               ),
               CheckboxListTile(
                 value: _predeterminada,

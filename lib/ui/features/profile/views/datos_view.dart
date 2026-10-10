@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../../../shared/form_validators.dart';
 import '../../shell/shell_scaffold.dart';
 import '../view_models/profile_view_model.dart';
 
@@ -112,13 +114,17 @@ class _DatosViewState extends State<DatosView> {
                 children: [
                   TextFormField(
                     controller: _nombreCtrl,
+                    textCapitalization: TextCapitalization.words,
+                    inputFormatters: [
+                      FormValidators.lettersOnlyFormatter,
+                      LengthLimitingTextInputFormatter(60),
+                    ],
                     decoration: const InputDecoration(
                       labelText: 'Nombre',
                       border: OutlineInputBorder(),
                     ),
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'El nombre es obligatorio'
-                        : null,
+                    validator: (v) =>
+                        FormValidators.requiredLetters(v, 'El nombre'),
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -126,9 +132,18 @@ class _DatosViewState extends State<DatosView> {
                       Expanded(
                         child: TextFormField(
                           controller: _apCtrl,
+                          textCapitalization: TextCapitalization.words,
+                          inputFormatters: [
+                            FormValidators.lettersOnlyFormatter,
+                            LengthLimitingTextInputFormatter(60),
+                          ],
                           decoration: const InputDecoration(
                             labelText: 'Apellido paterno',
                             border: OutlineInputBorder(),
+                          ),
+                          validator: (v) => FormValidators.optionalLetters(
+                            v,
+                            'El apellido paterno',
                           ),
                         ),
                       ),
@@ -136,9 +151,18 @@ class _DatosViewState extends State<DatosView> {
                       Expanded(
                         child: TextFormField(
                           controller: _amCtrl,
+                          textCapitalization: TextCapitalization.words,
+                          inputFormatters: [
+                            FormValidators.lettersOnlyFormatter,
+                            LengthLimitingTextInputFormatter(60),
+                          ],
                           decoration: const InputDecoration(
                             labelText: 'Apellido materno',
                             border: OutlineInputBorder(),
+                          ),
+                          validator: (v) => FormValidators.optionalLetters(
+                            v,
+                            'El apellido materno',
                           ),
                         ),
                       ),
@@ -148,13 +172,15 @@ class _DatosViewState extends State<DatosView> {
                   TextFormField(
                     controller: _telefonoCtrl,
                     keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FormValidators.digitsOnlyFormatter,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
                     decoration: const InputDecoration(
                       labelText: 'Teléfono',
                       border: OutlineInputBorder(),
                     ),
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'El teléfono es obligatorio'
-                        : null,
+                    validator: FormValidators.requiredPhone,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
