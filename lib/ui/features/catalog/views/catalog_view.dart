@@ -198,6 +198,7 @@ class _CatalogoCargado extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.only(bottom: 24),
           children: [
+            const SizedBox(height: 10),
             if (vm.carruseles.isNotEmpty) _Carrusel(carruseles: vm.carruseles),
             if (vm.productosDestacados.isNotEmpty) ...[
               _SeccionTituloConFlecha(

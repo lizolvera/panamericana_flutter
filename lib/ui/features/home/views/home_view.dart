@@ -418,14 +418,17 @@ class _CarritoView extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Opciones colapsables (Boceto 2: ENVÍO >, ENTREGA >, PAGO >, PROMOCIONES >)
-                  const _OpcionesEnvio(),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   // Encabezado de tabla
                   Container(
-                    color: AppColors.blancoCalido,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.blancoCalido,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.rosaBeigeClaro),
+                    ),
                     child: Row(
                       children: [
                         const SizedBox(width: 68),
@@ -454,10 +457,10 @@ class _CarritoView extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Divider(height: 1, color: AppColors.rosaBeigeClaro),
+                  const SizedBox(height: 8),
                   // Lista de productos
                   ...cart.items.map((item) => _CartItemTile(item: item)),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 6),
                   // Resumen del pedido (Boceto 2: subtotal, envío, impuestos, total)
                   _ResumenPedido(cart: cart),
                   const SizedBox(height: 24),
@@ -513,80 +516,6 @@ class _CarritoView extends StatelessWidget {
   }
 }
 
-// ── Opciones de envío colapsables (Boceto 2) ──────────────────────────────────
-
-class _OpcionesEnvio extends StatelessWidget {
-  const _OpcionesEnvio();
-
-  @override
-  Widget build(BuildContext context) {
-    const opciones = [
-      (Icons.local_shipping_outlined, 'ENVÍO'),
-      (Icons.schedule_outlined, 'ENTREGA'),
-      (Icons.payment_outlined, 'PAGO'),
-      (Icons.local_offer_outlined, 'PROMOCIONES'),
-    ];
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      decoration: BoxDecoration(
-        color: AppColors.blancoCalido,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.rosaBeigeClaro),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.cafeOscuro.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          for (var i = 0; i < opciones.length; i++) ...[
-            if (i > 0)
-              const Divider(height: 1, color: AppColors.rosaBeigeClaro),
-            InkWell(
-              onTap: () {},
-              borderRadius: i == 0
-                  ? const BorderRadius.vertical(top: Radius.circular(14))
-                  : i == opciones.length - 1
-                      ? const BorderRadius.vertical(
-                          bottom: Radius.circular(14))
-                      : BorderRadius.zero,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 13),
-                child: Row(
-                  children: [
-                    Icon(opciones[i].$1,
-                        size: 18, color: AppColors.terracota),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        opciones[i].$2,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                          letterSpacing: 0.5,
-                          color: AppColors.cafeOscuro,
-                        ),
-                      ),
-                    ),
-                    const Icon(Icons.chevron_right,
-                        size: 20,
-                        color: AppColors.terracota),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
 // ── Tile de producto en carrito ───────────────────────────────────────────────
 
 class _CartItemTile extends StatelessWidget {
@@ -602,14 +531,21 @@ class _CartItemTile extends StatelessWidget {
     final precio = producto.precioFinal ?? producto.precioNormal ?? 0;
 
     return Container(
-      color: AppColors.blancoCalido,
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: AppColors.blancoCalido,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.blancoCalido,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.rosaBeigeClaro),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.cafeOscuro.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
@@ -729,7 +665,6 @@ class _CartItemTile extends StatelessWidget {
               ),
             ),
           ],
-        ),
       ),
     );
   }
@@ -843,8 +778,7 @@ class _ResumenPedido extends StatelessWidget {
                   color: AppColors.cafeOscuro,
                 ),
               ),
-              const SizedBox(width: 12),
-              Flexible(
+              Expanded(
                 child: Text(
                   '\$${total.toStringAsFixed(2)}',
                   textAlign: TextAlign.right,

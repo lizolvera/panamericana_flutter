@@ -303,15 +303,35 @@ class _DialogDireccionState extends State<_DialogDireccion> {
     });
   }
 
+  InputDecoration _fieldDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.existente == null ? 'Nueva dirección' : 'Editar dirección'),
+      backgroundColor: AppColors.blancoCalido,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 6),
+      contentPadding: const EdgeInsets.fromLTRB(24, 10, 24, 4),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      title: Text(
+        widget.existente == null ? 'Nueva dirección' : 'Editar dirección',
+        style: const TextStyle(
+          color: AppColors.cafeOscuro,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextFormField(
                 controller: _aliasCtrl,
@@ -320,10 +340,11 @@ class _DialogDireccionState extends State<_DialogDireccion> {
                   FormValidators.addressFormatter,
                   LengthLimitingTextInputFormatter(40),
                 ],
-                decoration: const InputDecoration(labelText: 'Alias (ej. Casa)'),
+                decoration: _fieldDecoration('Alias (ej. Casa)'),
                 validator: (v) =>
                     FormValidators.requiredAddressText(v, 'El alias'),
               ),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _calleCtrl,
                 textCapitalization: TextCapitalization.words,
@@ -331,10 +352,11 @@ class _DialogDireccionState extends State<_DialogDireccion> {
                   FormValidators.addressFormatter,
                   LengthLimitingTextInputFormatter(100),
                 ],
-                decoration: const InputDecoration(labelText: 'Calle'),
+                decoration: _fieldDecoration('Calle'),
                 validator: (v) =>
                     FormValidators.requiredAddressText(v, 'La calle'),
               ),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _coloniaCtrl,
                 textCapitalization: TextCapitalization.words,
@@ -342,10 +364,11 @@ class _DialogDireccionState extends State<_DialogDireccion> {
                   FormValidators.addressFormatter,
                   LengthLimitingTextInputFormatter(80),
                 ],
-                decoration: const InputDecoration(labelText: 'Colonia'),
+                decoration: _fieldDecoration('Colonia'),
                 validator: (v) =>
                     FormValidators.optionalAddressText(v, 'La colonia'),
               ),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
@@ -356,7 +379,7 @@ class _DialogDireccionState extends State<_DialogDireccion> {
                         FormValidators.lettersOnlyFormatter,
                         LengthLimitingTextInputFormatter(60),
                       ],
-                      decoration: const InputDecoration(labelText: 'Ciudad'),
+                      decoration: _fieldDecoration('Ciudad'),
                       validator: (v) =>
                           FormValidators.requiredLetters(v, 'La ciudad'),
                     ),
@@ -370,13 +393,14 @@ class _DialogDireccionState extends State<_DialogDireccion> {
                         FormValidators.lettersOnlyFormatter,
                         LengthLimitingTextInputFormatter(60),
                       ],
-                      decoration: const InputDecoration(labelText: 'Estado'),
+                      decoration: _fieldDecoration('Estado'),
                       validator: (v) =>
                           FormValidators.requiredLetters(v, 'El estado'),
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
@@ -387,7 +411,7 @@ class _DialogDireccionState extends State<_DialogDireccion> {
                         FormValidators.digitsOnlyFormatter,
                         LengthLimitingTextInputFormatter(5),
                       ],
-                      decoration: const InputDecoration(labelText: 'CP'),
+                      decoration: _fieldDecoration('CP'),
                       validator: FormValidators.requiredPostalCode,
                     ),
                   ),
@@ -400,12 +424,13 @@ class _DialogDireccionState extends State<_DialogDireccion> {
                         FormValidators.digitsOnlyFormatter,
                         LengthLimitingTextInputFormatter(10),
                       ],
-                      decoration: const InputDecoration(labelText: 'Teléfono'),
+                      decoration: _fieldDecoration('Teléfono'),
                       validator: FormValidators.requiredPhone,
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _refsCtrl,
                 textCapitalization: TextCapitalization.sentences,
@@ -413,10 +438,11 @@ class _DialogDireccionState extends State<_DialogDireccion> {
                   FormValidators.addressFormatter,
                   LengthLimitingTextInputFormatter(120),
                 ],
-                decoration: const InputDecoration(labelText: 'Referencias'),
+                decoration: _fieldDecoration('Referencias'),
                 validator: (v) =>
                     FormValidators.optionalAddressText(v, 'Las referencias'),
               ),
+              const SizedBox(height: 6),
               CheckboxListTile(
                 value: _predeterminada,
                 onChanged: (v) => setState(() => _predeterminada = v ?? false),
@@ -433,7 +459,13 @@ class _DialogDireccionState extends State<_DialogDireccion> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
-        FilledButton(onPressed: _guardar, child: const Text('Guardar')),
+        FilledButton(
+          onPressed: _guardar,
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+          ),
+          child: const Text('Guardar'),
+        ),
       ],
     );
   }
