@@ -1,0 +1,122 @@
+name: Seguridad Flutter (SAST y DAST)
+
+on:
+  push:
+    branches: [master, M2-V2, M2-V1, main]
+  pull_request:
+    branches: [master, M2-V2, M2-V1, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sonarqube:
+    name: SAST con SonarQube
+
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Descargar código e historial
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validar configuración de SonarQube
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          if [ -z "$SONAR_TOKEN" ] || [ -z "$SONAR_HOST_URL" ]; then
+            echo "::error::Configura los secretos SONAR_TOKEN y SONAR_HOST_URL del repositorio."
+            exit 1
+          fi
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get --enforce-lockfile
+
+      - name: Compilar antes del análisis Dart
+        run: flutter build web --release
+
+      - name: Analizar código y verificar Quality Gate
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >-
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=300
+
+  zap:
+    name: DAST con OWASP ZAP
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get --enforce-lockfile
+
+      - name: Compilar aplicación web
+        run: flutter build web --release
+
+      - name: Servir aplicación para el escaneo local
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 --directory build/web > "$RUNNER_TEMP/flutter-web.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/flutter-web.pid"
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8080/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/flutter-web.log"
+          exit 1
+
+      - name: Ejecutar ZAP Baseline
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: http://127.0.0.1:8080/
+          allow_issue_writing: false
+          fail_action: true
+          artifact_name: zap-flutter-web
+
+      - name: Conservar reportes incluso si falla el escaneo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-flutter-reports
+          path: |
+            report_html.html
+            report_json.json
+            report_md.md
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Detener servidor local
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/flutter-web.pid" ]; then
+            kill "$(cat "$RUNNER_TEMP/flutter-web.pid")" || true
+          fi

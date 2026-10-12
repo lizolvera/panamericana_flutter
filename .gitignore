@@ -46,3 +46,9 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Resultados locales de seguridad
+.scannerwork/
+report_html.html
+report_json.json
+report_md.md
