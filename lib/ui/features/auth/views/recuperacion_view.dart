@@ -26,9 +26,6 @@ class _RecuperacionViewState extends State<RecuperacionView> {
   String? _pregunta;
   bool _trabajando = false;
 
-  static final RegExp _passwordRegex =
-      RegExp(r'^(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{12,}$');
-
   @override
   void dispose() {
     _emailCtrl.dispose();
@@ -110,10 +107,7 @@ class _RecuperacionViewState extends State<RecuperacionView> {
       }
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(mensaje),
-        backgroundColor: AppColors.vinoOscuro,
-      ),
+      SnackBar(content: Text(mensaje), backgroundColor: AppColors.vinoOscuro),
     );
   }
 
@@ -125,6 +119,7 @@ class _RecuperacionViewState extends State<RecuperacionView> {
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -142,8 +137,9 @@ class _RecuperacionViewState extends State<RecuperacionView> {
                 TextFormField(
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
+                  inputFormatters: [FormValidators.noSpacesFormatter],
                   decoration: const InputDecoration(
-                    labelText: 'Correo registrado',
+                    labelText: 'Correo registrado *',
                     border: OutlineInputBorder(),
                   ),
                   validator: (v) => FormValidators.requiredEmail(v),
@@ -183,11 +179,10 @@ class _RecuperacionViewState extends State<RecuperacionView> {
                 TextFormField(
                   controller: _respuestaCtrl,
                   decoration: const InputDecoration(
-                    labelText: 'Respuesta',
+                    labelText: 'Respuesta *',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (v) =>
-                      FormValidators.requiredText(v, 'La respuesta', min: 2, max: 60),
+                  validator: FormValidators.requiredSecretAnswer,
                 ),
                 const SizedBox(height: 20),
                 FilledButton(
@@ -212,28 +207,21 @@ class _RecuperacionViewState extends State<RecuperacionView> {
                   controller: _nuevaCtrl,
                   obscureText: true,
                   decoration: const InputDecoration(
-                    labelText: 'Nueva contraseña',
+                    labelText: 'Nueva contraseña *',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Ingresa una contraseña';
-                    if (!_passwordRegex.hasMatch(v)) {
-                      return 'Mínimo 12 caracteres, una mayúscula, un número y un símbolo';
-                    }
-                    return null;
-                  },
+                  validator: FormValidators.requiredPassword,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _confirmCtrl,
                   obscureText: true,
                   decoration: const InputDecoration(
-                    labelText: 'Confirmar contraseña',
+                    labelText: 'Confirmar contraseña *',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (v) => (v != _nuevaCtrl.text)
-                      ? 'Las contraseñas no coinciden'
-                      : null,
+                  validator: (v) =>
+                      FormValidators.confirmPassword(v, _nuevaCtrl.text),
                 ),
                 const SizedBox(height: 8),
                 const Text(

@@ -48,6 +48,12 @@ class _CatalogViewState extends State<CatalogView> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<CatalogViewModel>();
+    if (_searchCtrl.text != vm.busqueda) {
+      _searchCtrl.value = TextEditingValue(
+        text: vm.busqueda,
+        selection: TextSelection.collapsed(offset: vm.busqueda.length),
+      );
+    }
 
     return Container(
       color: AppColors.fondoGeneral,
@@ -95,17 +101,27 @@ class _CatalogViewState extends State<CatalogView> {
                   fillColor: AppColors.fondoGeneral,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.rosaBeigeClaro),
+                    borderSide: const BorderSide(
+                      color: AppColors.rosaBeigeClaro,
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.rosaBeigeClaro),
+                    borderSide: const BorderSide(
+                      color: AppColors.rosaBeigeClaro,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.vino, width: 1.5),
+                    borderSide: const BorderSide(
+                      color: AppColors.vino,
+                      width: 1.5,
+                    ),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                 ),
               ),
             ),
@@ -257,13 +273,10 @@ class _SeccionTitulo extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Text(
         texto,
-        style: Theme.of(context)
-            .textTheme
-            .titleMedium
-            ?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppColors.cafeOscuro,
-            ),
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: AppColors.cafeOscuro,
+        ),
       ),
     );
   }
@@ -271,10 +284,7 @@ class _SeccionTitulo extends StatelessWidget {
 
 /// Título de sección con flecha ">" que navega a otra pantalla.
 class _SeccionTituloConFlecha extends StatelessWidget {
-  const _SeccionTituloConFlecha({
-    required this.texto,
-    required this.onTap,
-  });
+  const _SeccionTituloConFlecha({required this.texto, required this.onTap});
 
   final String texto;
   final VoidCallback onTap;
@@ -287,13 +297,10 @@ class _SeccionTituloConFlecha extends StatelessWidget {
         children: [
           Text(
             texto,
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.cafeOscuro,
-                ),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.cafeOscuro,
+            ),
           ),
           const Spacer(),
           GestureDetector(
@@ -308,11 +315,7 @@ class _SeccionTituloConFlecha extends StatelessWidget {
                     color: AppColors.vino,
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right,
-                  size: 20,
-                  color: AppColors.vino,
-                ),
+                Icon(Icons.chevron_right, size: 20, color: AppColors.vino),
               ],
             ),
           ),
@@ -490,10 +493,7 @@ class _BannerCarrusel extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 14),
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [
-                          Color(0x007E2F31),
-                          Color(0xCC5F1618),
-                        ],
+                        colors: [Color(0x007E2F31), Color(0xCC5F1618)],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
@@ -505,10 +505,7 @@ class _BannerCarrusel extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                         shadows: [
-                          Shadow(
-                            color: AppColors.vinoOscuro,
-                            blurRadius: 4,
-                          ),
+                          Shadow(color: AppColors.vinoOscuro, blurRadius: 4),
                         ],
                       ),
                     ),
@@ -521,6 +518,7 @@ class _BannerCarrusel extends StatelessWidget {
     );
   }
 }
+
 class _Destacados extends StatefulWidget {
   const _Destacados({required this.productos});
 
@@ -583,6 +581,7 @@ class _DestacadosState extends State<_Destacados>
     );
   }
 }
+
 class _TarjetaDestacado extends StatelessWidget {
   const _TarjetaDestacado({required this.producto});
 
@@ -692,9 +691,10 @@ class _GrillaSkeletonState extends State<_GrillaSkeleton>
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
-      opacity: Tween<double>(begin: 0.35, end: 0.9).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-      ),
+      opacity: Tween<double>(
+        begin: 0.35,
+        end: 0.9,
+      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut)),
       child: GridView.builder(
         padding: const EdgeInsets.all(16),
         physics: const NeverScrollableScrollPhysics(),
@@ -715,7 +715,8 @@ class _GrillaSkeletonState extends State<_GrillaSkeleton>
                   decoration: BoxDecoration(
                     color: AppColors.rosaBeigeClaro.withValues(alpha: 0.5),
                     borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(14)),
+                      top: Radius.circular(14),
+                    ),
                   ),
                 ),
               ),
@@ -795,10 +796,7 @@ class _GridConTransicionState extends State<_GridConTransicion> {
         ).animate(animation);
         return FadeTransition(
           opacity: animation,
-          child: SlideTransition(
-            position: desplazamiento,
-            child: child,
-          ),
+          child: SlideTransition(position: desplazamiento, child: child),
         );
       },
       child: _Grilla(
@@ -839,12 +837,8 @@ class _Paginacion extends StatelessWidget {
           child: Text(
             'Página $actual de $total · ${vm.totalFiltrados} productos',
             key: ValueKey('contador-$actual-$total'),
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(
-                  color: AppColors.cafeOscuro.withValues(alpha: 0.55),
-                ),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: AppColors.cafeOscuro.withValues(alpha: 0.55)),
           ),
         ),
         const SizedBox(height: 6),
@@ -945,10 +939,7 @@ class _BotonAnterior extends StatelessWidget {
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.chevron_left, size: 18),
-          Text('Ant.'),
-        ],
+        children: [Icon(Icons.chevron_left, size: 18), Text('Ant.')],
       ),
     );
   }
@@ -972,10 +963,7 @@ class _BotonSiguiente extends StatelessWidget {
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('Sig.'),
-          Icon(Icons.chevron_right, size: 18),
-        ],
+        children: [Text('Sig.'), Icon(Icons.chevron_right, size: 18)],
       ),
     );
   }
@@ -1039,6 +1027,7 @@ class _GrillaState extends State<_Grilla> with SingleTickerProviderStateMixin {
     );
   }
 }
+
 class _ProductCard extends StatelessWidget {
   const _ProductCard({required this.producto});
 
@@ -1078,10 +1067,7 @@ class _ProductCard extends StatelessWidget {
                 producto: producto,
                 precio: precio,
                 maxNombreLines: 2,
-                bottom: _AddToCartButton(
-                  producto: producto,
-                  cart: cart,
-                ),
+                bottom: _AddToCartButton(producto: producto, cart: cart),
               ),
             ),
           ],
@@ -1225,10 +1211,7 @@ class _ProductInfoArea extends StatelessWidget {
 }
 
 class _AddToCartButton extends StatelessWidget {
-  const _AddToCartButton({
-    required this.producto,
-    required this.cart,
-  });
+  const _AddToCartButton({required this.producto, required this.cart});
 
   final Producto producto;
   final CartViewModel cart;
@@ -1449,10 +1432,8 @@ void _abrirDetalle(BuildContext context, Producto producto) {
     MaterialPageRoute(
       // `productoInicial` permite la transición Hero inmediata;
       // el detalle refresca con getProductoById al cargar.
-      builder: (_) => ProductDetailView(
-        productoId: id,
-        productoInicial: producto,
-      ),
+      builder: (_) =>
+          ProductDetailView(productoId: id, productoInicial: producto),
     ),
   );
 }
@@ -1472,7 +1453,10 @@ Widget _imagenConHero(Producto producto) {
   return id != null ? Hero(tag: 'producto-$id', child: imagen) : imagen;
 }
 
-Widget _placeholderImagen({IconData icon = Icons.content_cut, double size = 40}) {
+Widget _placeholderImagen({
+  IconData icon = Icons.content_cut,
+  double size = 40,
+}) {
   return Container(
     color: AppColors.rosaBeigeClaro.withValues(alpha: 0.5),
     child: Center(
@@ -1532,6 +1516,12 @@ class _CatalogPageBodyState extends State<_CatalogPageBody> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<CatalogViewModel>();
+    if (_searchCtrl.text != vm.busqueda) {
+      _searchCtrl.value = TextEditingValue(
+        text: vm.busqueda,
+        selection: TextSelection.collapsed(offset: vm.busqueda.length),
+      );
+    }
 
     return Container(
       color: AppColors.fondoGeneral,
@@ -1577,21 +1567,27 @@ class _CatalogPageBodyState extends State<_CatalogPageBody> {
                   fillColor: AppColors.fondoGeneral,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: AppColors.rosaBeigeClaro),
+                    borderSide: const BorderSide(
+                      color: AppColors.rosaBeigeClaro,
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: AppColors.rosaBeigeClaro),
+                    borderSide: const BorderSide(
+                      color: AppColors.rosaBeigeClaro,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: AppColors.vino, width: 1.5),
+                    borderSide: const BorderSide(
+                      color: AppColors.vino,
+                      width: 1.5,
+                    ),
                   ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                 ),
               ),
             ),

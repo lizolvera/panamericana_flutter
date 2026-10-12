@@ -66,13 +66,42 @@ class CatalogViewModel extends ChangeNotifier {
   List<Producto> get productosFiltrados => _filtrar();
 
   List<Producto> _filtrar() {
+    final busquedaNormalizada = _normalizar(_busqueda);
     return _productos.where((p) {
       final porMarca = _marcaFiltro == null || p.marca?.id == _marcaFiltro;
-      final porFamilia = _familiaFiltro == null || p.familia?.id == _familiaFiltro;
-      final porBusqueda = _busqueda.isEmpty ||
-          p.nombre.toLowerCase().contains(_busqueda.trim().toLowerCase());
+      final porFamilia =
+          _familiaFiltro == null || p.familia?.id == _familiaFiltro;
+      final porBusqueda =
+          busquedaNormalizada.isEmpty ||
+          _textoBuscable(p).contains(busquedaNormalizada);
       return p.activo && porMarca && porFamilia && porBusqueda;
     }).toList();
+  }
+
+  String _textoBuscable(Producto producto) {
+    return _normalizar(
+      [
+        producto.nombre,
+        producto.descripcion,
+        producto.marca?.nombre,
+        producto.familia?.nombre,
+        producto.skuNormal,
+        producto.skuMayoreo,
+        producto.skuCaja,
+      ].whereType<String>().join(' '),
+    );
+  }
+
+  String _normalizar(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[áàäâ]'), 'a')
+        .replaceAll(RegExp(r'[éèëê]'), 'e')
+        .replaceAll(RegExp(r'[íìïî]'), 'i')
+        .replaceAll(RegExp(r'[óòöô]'), 'o')
+        .replaceAll(RegExp(r'[úùüû]'), 'u')
+        .replaceAll('ñ', 'n');
   }
 
   /// Total de productos tras los filtros (para el contador).
@@ -125,8 +154,9 @@ class CatalogViewModel extends ChangeNotifier {
   /// activa y, en último caso, a los primeros del catálogo.
   List<Producto> get productosDestacados {
     if (_recomendados.isNotEmpty) return _recomendados;
-    final conOferta =
-        _productos.where((p) => p.ofertaAplicada != null).toList();
+    final conOferta = _productos
+        .where((p) => p.ofertaAplicada != null)
+        .toList();
     if (conOferta.isNotEmpty) return conOferta.take(8).toList();
     return _productos.take(8).toList();
   }
@@ -158,13 +188,16 @@ class CatalogViewModel extends ChangeNotifier {
       final semillas = _productos
           .where((p) => p.ofertaAplicada != null)
           .toList();
-      final semillasFinal =
-          semillas.isNotEmpty ? semillas : _productos.take(6).toList();
+      final semillasFinal = semillas.isNotEmpty
+          ? semillas
+          : _productos.take(6).toList();
       if (semillasFinal.isNotEmpty) {
         try {
           _recomendados = await _repository.getRecomendaciones(
-            productoIds:
-                semillasFinal.map((p) => p.id).whereType<String>().toList(),
+            productoIds: semillasFinal
+                .map((p) => p.id)
+                .whereType<String>()
+                .toList(),
             limite: 8,
           );
         } catch (_) {
@@ -197,7 +230,7 @@ class CatalogViewModel extends ChangeNotifier {
   }
 
   void setBusqueda(String texto) {
-    _busqueda = texto;
+    _busqueda = texto.trimLeft();
     _paginaActual = 1;
     notifyListeners();
   }

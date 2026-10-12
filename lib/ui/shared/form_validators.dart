@@ -7,19 +7,23 @@ class FormValidators {
     r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$',
   );
   static final RegExp _lettersRegex = RegExp(r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]+$");
-  static final RegExp _addressRegex =
-      RegExp(r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9#.,'°º /-]+$");
+  static final RegExp _addressRegex = RegExp(
+    r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9#.,'°º /-]+$",
+  );
+  static final RegExp _passwordRegex = RegExp(
+    r'^(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{12,}$',
+  );
 
   static final TextInputFormatter lettersOnlyFormatter =
-      FilteringTextInputFormatter.allow(
-    RegExp(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]"),
-  );
+      FilteringTextInputFormatter.allow(RegExp(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]"));
   static final TextInputFormatter addressFormatter =
       FilteringTextInputFormatter.allow(
-    RegExp(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9#.,'°º /-]"),
-  );
+        RegExp(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9#.,'°º /-]"),
+      );
   static final TextInputFormatter digitsOnlyFormatter =
       FilteringTextInputFormatter.digitsOnly;
+  static final TextInputFormatter noSpacesFormatter =
+      FilteringTextInputFormatter.deny(RegExp(r'\s'));
 
   static String? requiredText(
     String? value,
@@ -55,6 +59,30 @@ class FormValidators {
     if (base != null) return base;
     if (!_emailRegex.hasMatch(value!.trim())) {
       return 'Ingresa un correo válido';
+    }
+    return null;
+  }
+
+  static String? requiredPassword(String? value) {
+    final password = value ?? '';
+    if (password.isEmpty) return 'Ingresa una contraseña';
+    if (!_passwordRegex.hasMatch(password)) {
+      return 'Mínimo 12 caracteres, una mayúscula, un número y un símbolo';
+    }
+    return null;
+  }
+
+  static String? confirmPassword(String? value, String password) {
+    if (value == null || value.isEmpty) return 'Confirma la contraseña';
+    if (value != password) return 'Las contraseñas no coinciden';
+    return null;
+  }
+
+  static String? requiredSecretAnswer(String? value) {
+    final base = requiredText(value, 'La respuesta', min: 2, max: 60);
+    if (base != null) return base;
+    if (value!.trim().contains(RegExp(r'\s{2,}'))) {
+      return 'La respuesta no debe tener espacios dobles';
     }
     return null;
   }

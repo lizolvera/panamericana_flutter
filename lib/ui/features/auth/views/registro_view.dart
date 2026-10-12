@@ -32,9 +32,6 @@ class _RegistroViewState extends State<RegistroView> {
   String? _preguntaSecreta;
   bool _guardando = false;
 
-  static final RegExp _passwordRegex =
-      RegExp(r'^(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{12,}$');
-
   @override
   void dispose() {
     _nombreCtrl.dispose();
@@ -92,10 +89,7 @@ class _RegistroViewState extends State<RegistroView> {
       if (!mounted) return;
       final mensaje = _extractError(e);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(mensaje),
-          backgroundColor: AppColors.vinoOscuro,
-        ),
+        SnackBar(content: Text(mensaje), backgroundColor: AppColors.vinoOscuro),
       );
     } finally {
       if (mounted) setState(() => _guardando = false);
@@ -120,6 +114,7 @@ class _RegistroViewState extends State<RegistroView> {
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -130,7 +125,8 @@ class _RegistroViewState extends State<RegistroView> {
                   labelText: 'Nombre *',
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) => FormValidators.requiredLetters(v, 'El nombre'),
+                validator: (v) =>
+                    FormValidators.requiredLetters(v, 'El nombre'),
               ),
               const SizedBox(height: 12),
               Row(
@@ -143,8 +139,10 @@ class _RegistroViewState extends State<RegistroView> {
                         labelText: 'Apellido paterno',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (v) =>
-                          FormValidators.optionalLetters(v, 'El apellido paterno'),
+                      validator: (v) => FormValidators.optionalLetters(
+                        v,
+                        'El apellido paterno',
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -156,8 +154,10 @@ class _RegistroViewState extends State<RegistroView> {
                         labelText: 'Apellido materno',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (v) =>
-                          FormValidators.optionalLetters(v, 'El apellido materno'),
+                      validator: (v) => FormValidators.optionalLetters(
+                        v,
+                        'El apellido materno',
+                      ),
                     ),
                   ),
                 ],
@@ -166,6 +166,7 @@ class _RegistroViewState extends State<RegistroView> {
               TextFormField(
                 controller: _emailCtrl,
                 keyboardType: TextInputType.emailAddress,
+                inputFormatters: [FormValidators.noSpacesFormatter],
                 decoration: const InputDecoration(
                   labelText: 'Correo *',
                   border: OutlineInputBorder(),
@@ -177,24 +178,48 @@ class _RegistroViewState extends State<RegistroView> {
                 controller: _telefonoCtrl,
                 keyboardType: TextInputType.phone,
                 inputFormatters: [FormValidators.digitsOnlyFormatter],
+                maxLength: 10,
                 decoration: const InputDecoration(
                   labelText: 'Teléfono (10 dígitos) *',
                   border: OutlineInputBorder(),
+                  counterText: '',
                 ),
                 validator: (v) => FormValidators.requiredPhone(v),
               ),
               const SizedBox(height: 12),
-              InkWell(
-                onTap: _elegirFecha,
-                child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Fecha de nacimiento *',
-                    border: OutlineInputBorder(),
-                  ),
-                  child: Text(
-                    _fechaNacimiento == null
-                        ? 'Selecciona tu fecha'
-                        : '${_fechaNacimiento!.day}/${_fechaNacimiento!.month}/${_fechaNacimiento!.year}',
+              FormField<DateTime>(
+                validator: (_) {
+                  if (_fechaNacimiento == null) {
+                    return 'Selecciona tu fecha de nacimiento';
+                  }
+                  final hoy = DateTime.now();
+                  final edad =
+                      hoy.year -
+                      _fechaNacimiento!.year -
+                      ((hoy.month < _fechaNacimiento!.month ||
+                              (hoy.month == _fechaNacimiento!.month &&
+                                  hoy.day < _fechaNacimiento!.day))
+                          ? 1
+                          : 0);
+                  if (edad < 18) return 'Debes tener al menos 18 años';
+                  return null;
+                },
+                builder: (field) => InkWell(
+                  onTap: () async {
+                    await _elegirFecha();
+                    field.didChange(_fechaNacimiento);
+                  },
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'Fecha de nacimiento *',
+                      border: const OutlineInputBorder(),
+                      errorText: field.errorText,
+                    ),
+                    child: Text(
+                      _fechaNacimiento == null
+                          ? 'Selecciona tu fecha'
+                          : '${_fechaNacimiento!.day}/${_fechaNacimiento!.month}/${_fechaNacimiento!.year}',
+                    ),
                   ),
                 ),
               ),
@@ -206,13 +231,7 @@ class _RegistroViewState extends State<RegistroView> {
                   labelText: 'Contraseña *',
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Ingresa una contraseña';
-                  if (!_passwordRegex.hasMatch(v)) {
-                    return 'Mínimo 12 caracteres, una mayúscula, un número y un símbolo';
-                  }
-                  return null;
-                },
+                validator: FormValidators.requiredPassword,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -223,17 +242,15 @@ class _RegistroViewState extends State<RegistroView> {
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) =>
-                    (v != _passwordCtrl.text) ? 'Las contraseñas no coinciden' : null,
+                    FormValidators.confirmPassword(v, _passwordCtrl.text),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _preguntaSecreta,
                 items: kPreguntasSecretas.entries
                     .map(
-                      (e) => DropdownMenuItem(
-                        value: e.key,
-                        child: Text(e.value),
-                      ),
+                      (e) =>
+                          DropdownMenuItem(value: e.key, child: Text(e.value)),
                     )
                     .toList(),
                 onChanged: (v) => setState(() => _preguntaSecreta = v),
@@ -250,8 +267,7 @@ class _RegistroViewState extends State<RegistroView> {
                   labelText: 'Respuesta secreta *',
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) =>
-                    FormValidators.requiredText(v, 'La respuesta', min: 2, max: 60),
+                validator: FormValidators.requiredSecretAnswer,
               ),
               const SizedBox(height: 20),
               FilledButton(
