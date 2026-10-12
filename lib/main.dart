@@ -10,6 +10,8 @@ import 'ui/features/cart/view_models/cart_view_model.dart';
 import 'ui/features/shell/tab_index_notifier.dart';
 import 'ui/features/auth/views/google/google_init.dart';
 import 'ui/features/auth/views/login_view.dart';
+import 'ui/features/auth/views/recuperacion_view.dart';
+import 'ui/features/auth/views/registro_view.dart';
 import 'ui/features/catalog/view_models/catalog_view_model.dart';
 import 'ui/features/catalog/views/catalog_view.dart';
 import 'ui/features/home/views/home_view.dart';
@@ -42,10 +44,16 @@ Future<void> main() async {
   final authViewModel =
       AuthViewModel(authRepository, SessionStorage.instance);
 
-  // 🔒 La sesión manda: al cerrar sesión (o expirar), el carrito se vacía
-  // y el badge de la barra inferior desaparece.
+  // Restaura la sesión guardada al arrancar (sin bloquear el render).
+  authViewModel.restoreSession();
+
+  // 🔒 Sesión ↔ carrito: al autenticarse se restaura el carrito guardado
+  // del cache storage; al cerrar sesión (o expirar) se vacía y el badge
+  // de la barra inferior desaparece.
   authViewModel.addListener(() {
-    if (!authViewModel.isAuthenticated) {
+    if (authViewModel.isAuthenticated) {
+      cartViewModel.restaurarCarrito();
+    } else {
       cartViewModel.limpiar();
     }
   });
@@ -81,6 +89,8 @@ class PanamericanaApp extends StatelessWidget {
       routes: {
         '/': (_) => const HomeView(),
         '/login': (_) => const LoginView(),
+        '/registro': (_) => const RegistroView(),
+        '/recuperacion': (_) => const RecuperacionView(),
         '/catalogo': (_) => const CatalogViewPage(),
       },
     );

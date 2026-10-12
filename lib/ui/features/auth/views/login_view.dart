@@ -337,6 +337,32 @@ class _LoginViewState extends State<LoginView> {
                         ),
                         textAlign: TextAlign.center,
                       ),
+                      const SizedBox(height: 20),
+                      // Accesos: registro y recuperación de cuenta
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pushNamed('/registro');
+                        },
+                        child: Text(
+                          '¿No tienes cuenta? Regístrate',
+                          style: const TextStyle(
+                            color: AppColors.vino,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pushNamed('/recuperacion');
+                        },
+                        child: Text(
+                          '¿Olvidaste tu contraseña?',
+                          style: const TextStyle(
+                            color: AppColors.terracota,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ]
                     // ── Formulario paso 2 (2FA) ─────────────────────────────
                     else ...[

@@ -66,6 +66,69 @@ class AuthRepository {
     return AuthResult.fromJson(res.data as Map<String, dynamic>);
   }
 
+  // ── Registro de cuenta nueva ──────────────────────────────────────
+
+  /// Crea una cuenta nueva (POST /api/usuarios/register).
+  Future<void> register(Map<String, dynamic> datos) async {
+    await _dio.post('/api/usuarios/register', data: datos);
+  }
+
+  /// Verifica si el correo está disponible (POST /check-email).
+  Future<bool> checkEmail(String email) async {
+    final res = await _dio.post(
+      '/api/usuarios/check-email',
+      data: {'email': email},
+    );
+    return (res.data as Map<String, dynamic>)['available'] == true;
+  }
+
+  /// Verifica si el teléfono está disponible (POST /check-phone).
+  Future<bool> checkPhone(String telefono) async {
+    final res = await _dio.post(
+      '/api/usuarios/check-phone',
+      data: {'telefono': telefono},
+    );
+    return (res.data as Map<String, dynamic>)['available'] == true;
+  }
+
+  // ── Recuperación de cuenta ────────────────────────────────────────
+
+  /// Paso 1: confirma el correo (respuesta genérica por seguridad).
+  Future<void> verificarCorreo(String email) async {
+    await _dio.post(
+      '/api/usuarios/verificar-correo',
+      data: {'email': email},
+    );
+  }
+
+  /// Paso 2: devuelve la pregunta secreta del usuario (texto completo).
+  Future<String> obtenerPregunta(String email) async {
+    final res = await _dio.post(
+      '/api/usuarios/obtener-pregunta',
+      data: {'email': email},
+    );
+    return (res.data as Map<String, dynamic>)['preguntaSecreta'] as String;
+  }
+
+  /// Paso 3: valida la respuesta secreta.
+  Future<void> verificarRespuesta(String email, String respuesta) async {
+    await _dio.post(
+      '/api/usuarios/verificar-respuesta',
+      data: {'email': email, 'respuesta': respuesta},
+    );
+  }
+
+  /// Paso 4: cambia la contraseña tras verificar la respuesta.
+  Future<void> cambiarContrasenaRecuperacion(
+    String email,
+    String nuevaPassword,
+  ) async {
+    await _dio.post(
+      '/api/usuarios/cambiar-contrasena',
+      data: {'email': email, 'nuevaPassword': nuevaPassword},
+    );
+  }
+
   /// Perfil del cliente autenticado.
   Future<Usuario> getPerfil() async {
     final res = await _dio.get('/api/usuarios/perfil');

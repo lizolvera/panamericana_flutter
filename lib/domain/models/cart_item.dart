@@ -12,4 +12,16 @@ class CartItem {
     final precio = producto.precioFinal ?? producto.precioNormal ?? 0;
     return precio * cantidad;
   }
+
+  Map<String, dynamic> toJson() => {
+        'producto': producto.toJson(),
+        'cantidad': cantidad,
+      };
+
+  factory CartItem.fromJson(Map<String, dynamic> json) {
+    return CartItem(
+      producto: Producto.fromJson(json['producto'] as Map<String, dynamic>),
+      cantidad: json['cantidad'] as int,
+    );
+  }
 }

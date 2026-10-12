@@ -13,6 +13,7 @@ class SessionStorage {
   static const String _kToken = 'user_token';
   static const String _kRol = 'user_rol';
   static const String _kNombre = 'user_name';
+  static const String _kCart = 'user_cart';
 
   SharedPreferences? _prefs;
 
@@ -45,6 +46,13 @@ class SessionStorage {
     await _prefs?.setString(_kToken, token);
     await _prefs?.setString(_kRol, rol);
     await _prefs?.setString(_kNombre, nombre);
+  }
+
+  /// Carrito persistido en JSON (solo se restaura con sesión activa).
+  String? get cartJson => _prefs?.getString(_kCart);
+
+  Future<void> saveCart(String json) async {
+    await _prefs?.setString(_kCart, json);
   }
 
   Future<void> clear() async {

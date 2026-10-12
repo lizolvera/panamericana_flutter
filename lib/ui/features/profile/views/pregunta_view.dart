@@ -2,17 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../shared/form_validators.dart';
+import '../../../shared/preguntas_secretas.dart';
 import '../../shell/shell_scaffold.dart';
 import '../view_models/profile_view_model.dart';
-
-/// Las 5 preguntas secretas soportadas por el backend.
-const Map<String, String> _preguntas = {
-  'personaje-favorito': '¿Cuál es tu personaje favorito?',
-  'pelicula-favorita': '¿Cuál es tu película favorita?',
-  'mejor-amigo': '¿Quién es tu mejor amigo?',
-  'nombre-mascota': '¿Cuál es el nombre de tu mascota?',
-  'deporte-favorito': '¿Cuál es tu deporte favorito?',
-};
 
 /// **View de pregunta secreta**: configura la pregunta y respuesta de
 /// recuperación de cuenta.
@@ -63,7 +55,7 @@ class _PreguntaViewState extends State<PreguntaView> {
 
           if (perfil != null && !_rellenado) {
             _rellenado = true;
-            _pregunta = _preguntas.containsKey(perfil.preguntaSecreta)
+            _pregunta = kPreguntasSecretas.containsKey(perfil.preguntaSecreta)
                 ? perfil.preguntaSecreta
                 : null;
           }
@@ -90,7 +82,7 @@ class _PreguntaViewState extends State<PreguntaView> {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     initialValue: _pregunta,
-                    items: _preguntas.entries
+                    items: kPreguntasSecretas.entries
                         .map(
                           (e) => DropdownMenuItem(
                             value: e.key,
