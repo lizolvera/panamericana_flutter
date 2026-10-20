@@ -1,7 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+
+import '../payment/paypal_window.dart';
 
 import '../../../../data/network/api_client.dart';
 import '../../../../data/repositories/auth_repository.dart';
@@ -27,6 +28,8 @@ class _CheckoutViewState extends State<CheckoutView> {
   Map<String, dynamic>? _orden;
   bool _busy = true;
   String? _error;
+  String? _authorizedOrderId;
+  PaypalWindow? _paymentWindow;
 
   @override
   void initState() {
@@ -36,6 +39,7 @@ class _CheckoutViewState extends State<CheckoutView> {
   }
 
   Future<void> _ejecutar(Future<void> Function() action) async {
+    if (_busy && _paymentWindow != null) return;
     setState(() {
       _busy = true;
       _error = null;
@@ -74,37 +78,78 @@ class _CheckoutViewState extends State<CheckoutView> {
     });
   });
 
-  Future<void> _abrirPaypal() async {
-    final uri = Uri.tryParse(_orden?['approvalUrl']?.toString() ?? '');
-    if (uri == null ||
-        uri.scheme != 'https' ||
-        !(uri.host == 'www.paypal.com' ||
-            uri.host == 'www.sandbox.paypal.com')) {
-      throw StateError('Enlace de PayPal inválido.');
-    }
-    if (!await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-      webOnlyWindowName: '_blank',
-    )) {
-      throw StateError('No se pudo abrir PayPal.');
-    }
+  @override
+  void dispose() {
+    _paymentWindow?.close();
+    super.dispose();
   }
 
-  Future<void> _confirmar() => _ejecutar(() async {
-    await _repository.capturar(_orden!['orderId'] as String);
-    if (!mounted) return;
-    // Solo el checkout del carrito vacía sus artículos tras confirmar el servidor.
-    if (!widget.soloPedidos && _orden!['reutilizado'] != true) {
-      context.read<CartViewModel>().limpiar();
+  Future<void> _confirmar() async {
+    // La apertura es síncrona al clic: el navegador no debe bloquearla
+    // por esperar primero una petición HTTP.
+    if (_authorizedOrderId == null) {
+      try {
+        _paymentWindow = PaypalWindow.open(context);
+      } catch (_) {
+        setState(
+          () => _error = 'No se pudo abrir PayPal. Permite las ventanas emergentes de este sitio.',
+        );
+        return;
+      }
     }
-    setState(() => _orden = null);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Pago confirmado. Tu pedido está pagado.')),
-    );
-    final pedidos = await _repository.pedidos();
-    if (mounted) setState(() => _pedidos = pedidos);
-  });
+    await _ejecutar(() async {
+      try {
+        if (_authorizedOrderId == null) {
+          final anterior = _orden!;
+          final orden = await _repository.reintentar(
+            anterior['pedidoId'] as String,
+            returnUrl: _paymentWindow!.returnUrl,
+          );
+          if (!mounted) return;
+          setState(
+            () => _orden = {
+              ...orden,
+              'reutilizado': anterior['reutilizado'] == true,
+            },
+          );
+          final approved = await _paymentWindow!.authorize(
+            orden['approvalUrl'] as String,
+            orden['orderId'] as String,
+          );
+          if (!mounted) return;
+          if (!approved) {
+            setState(
+              () => _error =
+                  'El pago no se completó. Puedes volver a intentarlo.',
+            );
+            return;
+          }
+          _authorizedOrderId = orden['orderId'] as String;
+          _paymentWindow?.close();
+          _paymentWindow = null;
+        }
+        await _repository.capturar(_authorizedOrderId!);
+        if (!mounted) return;
+        if (!widget.soloPedidos && _orden!['reutilizado'] != true) {
+          context.read<CartViewModel>().limpiar();
+        }
+        setState(() {
+          _orden = null;
+          _authorizedOrderId = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pago confirmado. Tu pedido está pagado.'),
+          ),
+        );
+        final pedidos = await _repository.pedidos();
+        if (mounted) setState(() => _pedidos = pedidos);
+      } finally {
+        _paymentWindow?.close();
+        _paymentWindow = null;
+      }
+    });
+  }
 
   Future<void> _cancelar(String id) async {
     final confirmar = await showDialog<bool>(
@@ -133,6 +178,7 @@ class _CheckoutViewState extends State<CheckoutView> {
       if (mounted) {
         setState(() {
           _orden = null;
+          _authorizedOrderId = null;
           _pedidos = pedidos;
         });
       }
@@ -174,15 +220,11 @@ class _CheckoutViewState extends State<CheckoutView> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const Text(
-              'Abre PayPal y autoriza el pago. Después regresa aquí y pulsa Confirmar pago. El pedido se marcará pagado únicamente cuando el servidor confirme el cobro.',
-            ),
-            FilledButton(
-              onPressed: _busy ? null : () => _ejecutar(_abrirPaypal),
-              child: const Text('Abrir PayPal'),
+              'Al confirmar se abrirá una ventana segura de PayPal. Al autorizar, tu pago se confirmará automáticamente.',
             ),
             FilledButton(
               onPressed: _busy ? null : _confirmar,
-              child: const Text('Confirmar pago'),
+              child: Text(_busy ? 'Procesando pago…' : 'Confirmar pago'),
             ),
             TextButton(
               onPressed: _busy
@@ -250,7 +292,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                         );
                         if (mounted) setState(() => _orden = orden);
                       }),
-                child: const Text('Preparar pago con PayPal'),
+                child: const Text('Revisar pedido'),
               ),
             ],
             if (pendientes.isNotEmpty)

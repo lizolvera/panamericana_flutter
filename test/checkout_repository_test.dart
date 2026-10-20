@@ -104,4 +104,13 @@ void main() {
     await repository.cancelar('PEDIDO');
     expect(adapter.request.path, '/api/pagos/paypal/pedido/PEDIDO/cancelar');
   });
+  test('envía el retorno de la ventana en el reintento sin alterar el identificador', () async {
+    adapter.response = {'orderId': 'NEW'};
+    const callback =
+        'https://tienda.example/paypal_return.html?state=12345678901234567890';
+    await repository.reintentar('PEDIDO', returnUrl: callback);
+    expect(adapter.request.data['returnUrl'], callback);
+    expect(adapter.request.data['canal'], 'flutter');
+    expect(adapter.request.receiveTimeout, const Duration(seconds: 90));
+  });
 }

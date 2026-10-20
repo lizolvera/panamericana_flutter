@@ -7,15 +7,21 @@ class CheckoutRepository {
   CheckoutRepository(this._dio);
   final Dio _dio;
   static const _base = '/api/pagos/paypal';
+  // Permite el arranque en frío del backend y la respuesta de PayPal.
+  Options get _paymentOptions =>
+      Options(receiveTimeout: const Duration(seconds: 90));
 
   Future<Map<String, dynamic>> crear(
     List<CartItem> items,
-    Direccion direccion,
-  ) async {
+    Direccion direccion, {
+    String? returnUrl,
+  }) async {
     final response = await _dio.post(
       '$_base/orden',
+      options: _paymentOptions,
       data: {
         'canal': 'flutter',
+        'returnUrl': ?returnUrl,
         'productos': items
             .map((i) => {'producto': i.producto.id, 'cantidad': i.cantidad})
             .toList(),
@@ -25,10 +31,14 @@ class CheckoutRepository {
     return Map<String, dynamic>.from(response.data as Map);
   }
 
-  Future<Map<String, dynamic>> reintentar(String id) async {
+  Future<Map<String, dynamic>> reintentar(
+    String id, {
+    String? returnUrl,
+  }) async {
     final response = await _dio.post(
       '$_base/pedido/${Uri.encodeComponent(id)}/orden',
-      data: {'canal': 'flutter'},
+      options: _paymentOptions,
+      data: {'canal': 'flutter', 'returnUrl': ?returnUrl},
     );
     return Map<String, dynamic>.from(response.data as Map);
   }
@@ -36,6 +46,7 @@ class CheckoutRepository {
   Future<void> capturar(String id) async {
     final response = await _dio.post(
       '$_base/orden/${Uri.encodeComponent(id)}/capturar',
+      options: _paymentOptions,
     );
     final pedido = response.data['pedido'];
     if (pedido is! Map || pedido['pago']?['estado'] != 'aprobado') {

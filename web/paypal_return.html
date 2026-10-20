@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PayPal · Panamericana</title>
+<p id="status">Autorización recibida. Confirmando el pago en Panamericana…</p>
+<script>
+  const params = new URLSearchParams(location.search);
+  const cancelled = params.get('cancelled') === '1';
+  if (cancelled) document.getElementById('status').textContent = 'Pago sin completar. Puedes cerrar esta ventana y reintentar.';
+  if (window.opener) {
+    window.opener.postMessage({
+      type: 'panamericana-paypal',
+      state: params.get('state'),
+      orderId: params.get('token'),
+      cancelled
+    }, location.origin);
+    // La aplicación principal cierra la ventana al recibir el mensaje.
+  } else {
+    document.getElementById('status').textContent = 'Regresa a Panamericana para consultar el estado de tu pedido.';
+  }
+</script>
+</html>
