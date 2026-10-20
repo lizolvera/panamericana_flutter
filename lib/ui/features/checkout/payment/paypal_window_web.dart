@@ -1,3 +1,5 @@
+import 'payment_window.dart';
+
 import 'dart:js_interop';
 
 import 'package:flutter/material.dart';
@@ -15,13 +17,16 @@ external JSPromise<JSBoolean> _authorize(
 @JS('panamericanaPaypal.close')
 external void _close(JSString state);
 
-class PaypalWindow {
+class PaypalWindow implements PaymentWindow {
   PaypalWindow._(this._state);
   final JSString _state;
   // Se abre antes de cualquier await para evitar el bloqueo de ventanas.
   static PaypalWindow open(BuildContext context) => PaypalWindow._(_open());
+  @override
   String get returnUrl => _returnUrl(_state).toDart;
+  @override
   Future<bool> authorize(String url, String orderId) async =>
       (await _authorize(_state, url.toJS, orderId.toJS).toDart).toDart;
+  @override
   void close() => _close(_state);
 }

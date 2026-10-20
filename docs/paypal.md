@@ -1,6 +1,6 @@
 # PayPal en Flutter
 
-Después de revisar la dirección y el total, el botón **Confirmar pago** abre PayPal y confirma el cobro automáticamente al terminar la autorización. No hay un botón separado para abrir PayPal ni es necesario regresar y confirmar manualmente.
+Tras seleccionar la dirección, el botón **Confirmar pago** abre PayPal y confirma el cobro automáticamente al terminar la autorización. El mismo clic crea la orden, abre PayPal y captura al autorizar. No hay un paso adicional de «Revisar pedido», un botón separado para abrir PayPal ni confirmación manual posterior.
 
 En Flutter Web se abre una ventana emergente desde el clic del usuario. PayPal regresa a `paypal_return.html`, un archivo estático del mismo sitio de Flutter. Esa página avisa a la aplicación, que cierra la ventana y llama al endpoint autenticado de captura. Se validan el origen, la ventana emisora, un estado aleatorio y el identificador de la orden. Solo el backend puede confirmar que el cobro fue aprobado.
 
@@ -39,3 +39,13 @@ Pruebas locales: `flutter analyze`, `flutter test`, `flutter build web`; para va
 Las pruebas automatizadas no realizan cobros ni sustituyen una transacción Sandbox de extremo a extremo.
 
 Referencia: [flujo de aprobación y captura de PayPal](https://developer.paypal.com/api/rest/integration/orders-api).
+
+## Si siguen apareciendo dos botones
+
+La versión actual no contiene el texto «Abrir PayPal». Si aparece, se está ejecutando una compilación anterior.
+
+- Android/iOS: detener la ejecución anterior y recompilar con `flutter pub get` y `flutter run` desde `panamericana_flutter`, seleccionando un teléfono o emulador. Si se distribuye un APK, generar e instalar el APK actualizado (`flutter build apk --release`); actualizar solo el sitio web no actualiza la aplicación instalada.
+- Chrome/PWA: publicar el nuevo `flutter build web`, cerrar las instancias anteriores y actualizar la instalación/caché del sitio si sigue mostrando la versión previa. Ejecutar con destino Chrome sigue siendo Flutter Web, incluso con apariencia de teléfono.
+- El botón debe decir «Confirmar pago» al seleccionar la dirección y abrir el pago directamente. En móvil debe aparecer una pantalla con «Pago seguro con PayPal» y un botón de cierre dentro de la app, sin abrir Chrome.
+
+El resumen del carrito ya no añade el 16 % adicional que el backend no cobra. El importe definitivo sigue siendo el calculado por el servidor.

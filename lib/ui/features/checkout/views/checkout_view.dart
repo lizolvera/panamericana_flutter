@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../payment/paypal_window.dart';
+import '../payment/payment_window.dart';
 
 import '../../../../data/network/api_client.dart';
 import '../../../../data/repositories/auth_repository.dart';
@@ -14,7 +15,8 @@ import '../../profile/view_models/direcciones_view_model.dart';
 
 /// El pedido pendiente se recupera del servidor incluso tras cerrar la app.
 class CheckoutView extends StatefulWidget {
-  const CheckoutView({super.key, this.soloPedidos = false});
+  const CheckoutView({super.key, this.soloPedidos = false, this.windowFactory});
+  final PaymentWindow Function(BuildContext)? windowFactory;
   final bool soloPedidos;
   @override
   State<CheckoutView> createState() => _CheckoutViewState();
@@ -29,7 +31,7 @@ class _CheckoutViewState extends State<CheckoutView> {
   bool _busy = true;
   String? _error;
   String? _authorizedOrderId;
-  PaypalWindow? _paymentWindow;
+  PaymentWindow? _paymentWindow;
 
   @override
   void initState() {
@@ -89,7 +91,7 @@ class _CheckoutViewState extends State<CheckoutView> {
     // por esperar primero una petición HTTP.
     if (_authorizedOrderId == null) {
       try {
-        _paymentWindow = PaypalWindow.open(context);
+        _paymentWindow = (widget.windowFactory ?? PaypalWindow.open)(context);
       } catch (_) {
         setState(
           () => _error = 'No se pudo abrir PayPal. Permite las ventanas emergentes de este sitio.',
@@ -100,16 +102,24 @@ class _CheckoutViewState extends State<CheckoutView> {
     await _ejecutar(() async {
       try {
         if (_authorizedOrderId == null) {
-          final anterior = _orden!;
-          final orden = await _repository.reintentar(
-            anterior['pedidoId'] as String,
-            returnUrl: _paymentWindow!.returnUrl,
-          );
+          final anterior = _orden;
+          final orden = anterior == null
+              ? await _repository.crear(
+                  List.of(context.read<CartViewModel>().items),
+                  _direccion!,
+                  returnUrl: _paymentWindow!.returnUrl,
+                )
+              : await _repository.reintentar(
+                  anterior['pedidoId'] as String,
+                  returnUrl: _paymentWindow!.returnUrl,
+                );
           if (!mounted) return;
           setState(
             () => _orden = {
               ...orden,
-              'reutilizado': anterior['reutilizado'] == true,
+              'reutilizado':
+                  orden['reutilizado'] == true ||
+                  anterior?['reutilizado'] == true,
             },
           );
           final approved = await _paymentWindow!.authorize(
@@ -283,16 +293,8 @@ class _CheckoutViewState extends State<CheckoutView> {
                 'El servidor calculará el importe final. Pago con PayPal; tarjetas según disponibilidad.',
               ),
               FilledButton(
-                onPressed: _busy || _direccion == null
-                    ? null
-                    : () => _ejecutar(() async {
-                        final orden = await _repository.crear(
-                          List.of(cart.items),
-                          _direccion!,
-                        );
-                        if (mounted) setState(() => _orden = orden);
-                      }),
-                child: const Text('Revisar pedido'),
+                onPressed: _busy || _direccion == null ? null : _confirmar,
+                child: Text(_busy ? 'Procesando pago…' : 'Confirmar pago'),
               ),
             ],
             if (pendientes.isNotEmpty)
@@ -315,20 +317,17 @@ class _CheckoutViewState extends State<CheckoutView> {
                         TextButton(
                           onPressed: _busy
                               ? null
-                              : () => _ejecutar(() async {
-                                  final orden = await _repository.reintentar(
-                                    p['_id'] as String,
+                              : () {
+                                  setState(
+                                    () => _orden = {
+                                      'pedidoId': p['_id'],
+                                      'total': p['total'],
+                                      'reutilizado': true,
+                                    },
                                   );
-                                  if (mounted) {
-                                    setState(
-                                      () => _orden = {
-                                        ...orden,
-                                        'reutilizado': true,
-                                      },
-                                    );
-                                  }
-                                }),
-                          child: const Text('Retomar pago con PayPal'),
+                                  _confirmar();
+                                },
+                          child: const Text('Confirmar pago'),
                         ),
                         TextButton(
                           onPressed: _busy

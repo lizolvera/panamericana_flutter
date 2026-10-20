@@ -709,8 +709,8 @@ class _ResumenPedido extends StatelessWidget {
   Widget build(BuildContext context) {
     final subtotal = cart.totalPrecio;
     const envio = 0.0;
-    final impuestos = subtotal * 0.16;
-    final total = subtotal + envio + impuestos;
+    // El backend no añade un impuesto adicional al total de los productos.
+    final total = subtotal + envio;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -749,11 +749,6 @@ class _ResumenPedido extends StatelessWidget {
             label: 'Total de envío',
             valor: 'Gratis',
             valorColor: AppColors.terracota,
-          ),
-          const SizedBox(height: 6),
-          _FilaResumen(
-            label: 'Impuestos (16%)',
-            valor: '\$${impuestos.toStringAsFixed(2)}',
           ),
           const SizedBox(height: 14),
           const Divider(color: AppColors.rosaBeigeClaro),

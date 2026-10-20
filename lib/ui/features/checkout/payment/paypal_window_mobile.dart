@@ -1,10 +1,12 @@
+import 'payment_window.dart';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../../data/network/api_client.dart';
 
-class PaypalWindow {
+class PaypalWindow implements PaymentWindow {
   PaypalWindow._(this._context);
   final BuildContext _context;
   VoidCallback? _dismiss;
@@ -18,8 +20,10 @@ class PaypalWindow {
     return PaypalWindow._(context);
   }
 
+  @override
   String? get returnUrl => null;
 
+  @override
   Future<bool> authorize(String url, String orderId) async {
     final approval = Uri.parse(url);
     if (approval.scheme != 'https' ||
@@ -80,5 +84,6 @@ class PaypalWindow {
     return result == true;
   }
 
+  @override
   void close() => _dismiss?.call();
 }
