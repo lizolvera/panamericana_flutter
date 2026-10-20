@@ -10,6 +10,7 @@ import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/repositories/checkout_repository.dart';
 import '../../../../domain/models/direccion.dart';
 import '../../cart/view_models/cart_view_model.dart';
+import '../../shell/tab_index_notifier.dart';
 import '../../profile/views/direcciones_view.dart';
 import '../../profile/view_models/direcciones_view_model.dart';
 
@@ -152,8 +153,8 @@ class _CheckoutViewState extends State<CheckoutView> {
             content: Text('Pago confirmado. Tu pedido está pagado.'),
           ),
         );
-        final pedidos = await _repository.pedidos();
-        if (mounted) setState(() => _pedidos = pedidos);
+        context.read<TabIndexNotifier>().indice = 0;
+        Navigator.of(context).popUntil((route) => route.isFirst);
       } finally {
         _paymentWindow?.close();
         _paymentWindow = null;

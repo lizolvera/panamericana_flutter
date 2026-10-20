@@ -6,6 +6,7 @@ import 'package:panamericana_flutter/data/network/api_client.dart';
 import 'package:panamericana_flutter/data/repositories/auth_repository.dart';
 import 'package:panamericana_flutter/domain/models/producto.dart';
 import 'package:panamericana_flutter/ui/features/cart/view_models/cart_view_model.dart';
+import 'package:panamericana_flutter/ui/features/shell/tab_index_notifier.dart';
 import 'package:panamericana_flutter/ui/features/checkout/payment/payment_window.dart';
 import 'package:panamericana_flutter/ui/features/checkout/views/checkout_view.dart';
 
@@ -90,18 +91,28 @@ void main() {
             ),
           );
         final window = _Window(approved);
+        final tab = TabIndexNotifier()..indice = 1;
         await tester.pumpWidget(
           MultiProvider(
             providers: [
               Provider.value(value: ApiClient.instance),
               Provider.value(value: AuthRepository(dio)),
               ChangeNotifierProvider.value(value: cart),
+              ChangeNotifierProvider.value(value: tab),
             ],
             child: MaterialApp(
-              home: CheckoutView(windowFactory: (_) => window),
+              home: Builder(builder: (context) => Scaffold(
+                body: FilledButton(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                    builder: (_) => CheckoutView(windowFactory: (_) => window),
+                  )),
+                  child: const Text('Menú principal'),
+                ),
+              )),
             ),
           ),
         );
+        await tester.tap(find.text('Menú principal'));
         await tester.pumpAndSettle();
         expect(find.text('Confirmar pago'), findsOneWidget);
         expect(find.text('Abrir PayPal'), findsNothing);
@@ -121,6 +132,9 @@ void main() {
           approved ? 1 : 0,
         );
         expect(cart.totalArticulos, approved ? 0 : 1);
+        expect(tab.indice, approved ? 0 : 1);
+        expect(find.byType(CheckoutView), approved ? findsNothing : findsOneWidget);
+        if (approved) expect(find.text('Menú principal'), findsOneWidget);
         expect(
           requests.where((r) => r.path.endsWith('/PEDIDO/orden')),
           isEmpty,
