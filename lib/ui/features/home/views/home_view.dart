@@ -1,3 +1,4 @@
+import '../../checkout/views/checkout_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -490,22 +491,11 @@ class _CarritoView extends StatelessWidget {
                       letterSpacing: 0.5,
                     ),
                   ),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text(
-                          'El pago estará disponible en la fase 3',
-                        ),
-                        backgroundColor: AppColors.vino,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    );
-                  },
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(builder: (_) => const CheckoutView()),
+                  ),
                   icon: const Icon(Icons.lock_outline, size: 20),
-                  label: const Text('Hacer Pedido'),
+                  label: const Text('Pagar con PayPal'),
                 ),
               ),
             ),
