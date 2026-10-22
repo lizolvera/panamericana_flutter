@@ -2,9 +2,9 @@ name: Seguridad Flutter (SAST y DAST)
 
 on:
   push:
-    branches: [master, M2-V2, M2-V1, main]
+    branches: [master, develop, M2-V2, M2-V1, main]
   pull_request:
-    branches: [master, M2-V2, M2-V1, main]
+    branches: [master, develop, M2-V2, M2-V1, main]
   workflow_dispatch:
 
 permissions:
@@ -15,6 +15,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  pruebas:
+    name: Pruebas Flutter
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - run: flutter analyze --fatal-infos
+      - run: flutter test
+
   sonarqube:
     name: SAST con SonarQube
 
@@ -120,3 +135,66 @@ jobs:
           if [ -f "$RUNNER_TEMP/flutter-web.pid" ]; then
             kill "$(cat "$RUNNER_TEMP/flutter-web.pid")" || true
           fi
+
+  integrar-master:
+    name: Preparar integración automática a master
+    needs: [pruebas, sonarqube, zap]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: promover-develop-master
+      cancel-in-progress: false
+    steps:
+      # Un token de GitHub App o PAT permite que el PR dispare sus validaciones
+      # automáticamente. El GITHUB_TOKEN puede requerir aprobación manual.
+      - name: Crear PR y activar auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.AUTO_MERGE_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          EXPECTED_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Configura AUTO_MERGE_TOKEN y las protecciones de master según .github/CONFIGURACION_CI.md."
+            exit 1
+          fi
+
+          # Fallar de forma segura si master no exige las validaciones del PR.
+          protection=$(gh api "repos/$GH_REPO/branches/master/protection")
+          if ! jq -e '
+            .required_pull_request_reviews != null and
+            .required_status_checks.strict == true and
+            .enforce_admins.enabled == true and
+            (.required_status_checks |
+              ((.contexts // []) + [(.checks // [])[] | .context]) |
+              (index("Pruebas Flutter") != null and
+               index("SAST con SonarQube") != null and
+               index("DAST con OWASP ZAP") != null))
+          ' <<< "$protection" > /dev/null; then
+            echo "::error::master debe exigir PR, rama actualizada y los tres checks, incluyendo administradores. Consulta .github/CONFIGURACION_CI.md."
+            exit 1
+          fi
+
+          # No promover una ejecución antigua si develop ya recibió otro cambio.
+          current_sha=$(gh api "repos/$GH_REPO/git/ref/heads/develop" --jq '.object.sha')
+          if [ "$current_sha" != "$EXPECTED_SHA" ]; then
+            echo "develop tiene cambios más recientes; su ejecución se encargará de integrarlos."
+            exit 0
+          fi
+
+          ahead=$(gh api "repos/$GH_REPO/compare/master...develop" --jq '.ahead_by')
+          if [ "$ahead" = "0" ]; then
+            echo "No hay cambios pendientes para master."
+            exit 0
+          fi
+
+          pr=$(gh pr list --base master --head develop --state open --json number --jq '.[0].number // empty')
+          if [ -z "$pr" ]; then
+            gh pr create --base master --head develop \
+              --title "Integrar develop en master" \
+              --body "Integración automática tras superar las pruebas Flutter, SonarQube y OWASP ZAP en develop. La integración requiere superar también las comprobaciones obligatorias del pull request."
+            pr=$(gh pr list --base master --head develop --state open --json number --jq '.[0].number')
+          fi
+          gh pr merge "$pr" --auto --merge --match-head-commit "$EXPECTED_SHA"
