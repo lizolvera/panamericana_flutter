@@ -58,3 +58,37 @@ No publicar credenciales en commits.
 ZAP Baseline revisa la web servida en el runner. No valida por sí solo flujos
 autenticados, pagos reales o la seguridad del backend remoto. Actualizar master
 tampoco equivale a desplegar: el despliegue depende de su propia configuración.
+
+## Servidor y clasificación del reporte de ZAP
+
+El escaneo usa `.github/scripts/serve_web.py`, con CSP, protección contra
+clickjacking, nosniff, política de permisos, caché desactivada y sin versiones
+del intérprete. Las cabeceras también se envían en respuestas de error. Los
+directorios sin index no se listan. Estas medidas solo se aplican al servidor
+temporal; el hosting real necesita su propia configuración equivalente.
+
+ZAP mantiene `fail_action: true`. `-I` permite terminar ante advertencias,
+pero inmediatamente después `check_zap.py` revisa el JSON y falla con cualquier
+riesgo bajo, medio o alto no contemplado expresamente. Un reporte ausente o
+inválido también bloquea. Los informativos se imprimen sin bloquear.
+
+Excepciones limitadas a URLs de `127.0.0.1:8080`:
+
+- `90004-2`, riesgo máximo bajo: no se exige COEP require-corp porque los
+  recursos externos deben conceder CORS/CORP; no se declara aislamiento completo.
+- `90004-3`, riesgo máximo bajo: se usa COOP same-origin-allow-popups para
+  mantener la comunicación del popup de Google sin FedCM.
+- `10055-6`, riesgo máximo medio: estilos inline generados por Flutter.
+  No se admiten scripts inline ni unsafe-eval. Otras debilidades de CSP bloquean.
+
+Referencias:
+https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid
+https://www.zaproxy.org/docs/docker/baseline-scan/
+https://www.zaproxy.org/docs/alerts/10055-6/
+
+Después de modificar CSP, comprobar en navegador que se rendericen Flutter,
+catálogo, imágenes y acceso con Google. La prueba HTTP verifica las cabeceras,
+no la ejecución del código Dart ni OAuth. Si se agregan proveedores o dominios,
+revisar las directivas necesarias sin recurrir a comodines globales. La versión
+actual no está verificada con un navegador ni con ZAP completo localmente;
+la siguiente ejecución de GitHub debe confirmar el resultado del escaneo.

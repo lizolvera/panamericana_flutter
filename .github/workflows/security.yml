@@ -98,7 +98,8 @@ jobs:
 
       - name: Servir aplicación para el escaneo local
         run: |
-          python3 -m http.server 8080 --bind 127.0.0.1 --directory build/web > "$RUNNER_TEMP/flutter-web.log" 2>&1 &
+          python3 -m unittest discover -s .github/scripts -p test_security.py
+          python3 .github/scripts/serve_web.py --directory build/web --port 8080 > "$RUNNER_TEMP/flutter-web.log" 2>&1 &
           echo $! > "$RUNNER_TEMP/flutter-web.pid"
           for attempt in {1..30}; do
             if curl --fail --silent http://127.0.0.1:8080/ > /dev/null; then
@@ -116,6 +117,12 @@ jobs:
           allow_issue_writing: false
           fail_action: true
           artifact_name: zap-flutter-web
+          # El gate siguiente clasifica advertencias por alertRef y riesgo.
+          # -I evita fallar por avisos informativos; los FAIL de ZAP siguen fallando.
+          cmd_options: '-I'
+
+      - name: Evaluar riesgos y excepciones documentadas
+        run: python3 .github/scripts/check_zap.py report_json.json
 
       - name: Conservar reportes incluso si falla el escaneo
         if: always()
