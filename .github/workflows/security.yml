@@ -1,0 +1,207 @@
+name: Seguridad Flutter (SAST y DAST)
+
+on:
+  push:
+    branches: [master, develop, M2-V2, M2-V1, main]
+  pull_request:
+    branches: [master, develop, M2-V2, M2-V1, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pruebas:
+    name: Pruebas Flutter
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - run: flutter analyze --fatal-infos
+      - run: flutter test
+
+  sonarqube:
+    name: SAST con SonarQube
+
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Descargar código e historial
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validar configuración de SonarQube
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          if [ -z "$SONAR_TOKEN" ] || [ -z "$SONAR_HOST_URL" ]; then
+            echo "::error::Configura los secretos SONAR_TOKEN y SONAR_HOST_URL del repositorio."
+            exit 1
+          fi
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get --enforce-lockfile
+
+      - name: Compilar antes del análisis Dart
+        run: flutter build web --release
+
+      - name: Analizar código y verificar Quality Gate
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >-
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=300
+
+  zap:
+    name: DAST con OWASP ZAP
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get --enforce-lockfile
+
+      - name: Compilar aplicación web
+        run: flutter build web --release
+
+      - name: Servir aplicación para el escaneo local
+        run: |
+          python3 -m unittest discover -s .github/scripts -p test_security.py
+          python3 .github/scripts/serve_web.py --directory build/web --port 8080 > "$RUNNER_TEMP/flutter-web.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/flutter-web.pid"
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8080/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/flutter-web.log"
+          exit 1
+
+      - name: Ejecutar ZAP Baseline
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: http://127.0.0.1:8080/
+          allow_issue_writing: false
+          fail_action: true
+          artifact_name: zap-flutter-web
+          # El gate siguiente clasifica advertencias por alertRef y riesgo.
+          # -I evita fallar por avisos informativos; los FAIL de ZAP siguen fallando.
+          cmd_options: '-I'
+
+      - name: Evaluar riesgos y excepciones documentadas
+        run: python3 .github/scripts/check_zap.py report_json.json
+
+      - name: Conservar reportes incluso si falla el escaneo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-flutter-reports
+          path: |
+            report_html.html
+            report_json.json
+            report_md.md
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Detener servidor local
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/flutter-web.pid" ]; then
+            kill "$(cat "$RUNNER_TEMP/flutter-web.pid")" || true
+          fi
+
+  integrar-master:
+    name: Preparar integración automática a master
+    needs: [pruebas, sonarqube, zap]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: promover-develop-master
+      cancel-in-progress: false
+    steps:
+      # Un token de GitHub App o PAT permite que el PR dispare sus validaciones
+      # automáticamente. El GITHUB_TOKEN puede requerir aprobación manual.
+      - name: Crear PR y activar auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.AUTO_MERGE_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          EXPECTED_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Configura AUTO_MERGE_TOKEN y las protecciones de master según .github/CONFIGURACION_CI.md."
+            exit 1
+          fi
+
+          # Fallar de forma segura si master no exige las validaciones del PR.
+          protection=$(gh api "repos/$GH_REPO/branches/master/protection")
+          if ! jq -e '
+            .required_pull_request_reviews != null and
+            .required_status_checks.strict == true and
+            .enforce_admins.enabled == true and
+            (.required_status_checks |
+              ((.contexts // []) + [(.checks // [])[] | .context]) |
+              (index("Pruebas Flutter") != null and
+               index("SAST con SonarQube") != null and
+               index("DAST con OWASP ZAP") != null))
+          ' <<< "$protection" > /dev/null; then
+            echo "::error::master debe exigir PR, rama actualizada y los tres checks, incluyendo administradores. Consulta .github/CONFIGURACION_CI.md."
+            exit 1
+          fi
+
+          # No promover una ejecución antigua si develop ya recibió otro cambio.
+          current_sha=$(gh api "repos/$GH_REPO/git/ref/heads/develop" --jq '.object.sha')
+          if [ "$current_sha" != "$EXPECTED_SHA" ]; then
+            echo "develop tiene cambios más recientes; su ejecución se encargará de integrarlos."
+            exit 0
+          fi
+
+          ahead=$(gh api "repos/$GH_REPO/compare/master...develop" --jq '.ahead_by')
+          if [ "$ahead" = "0" ]; then
+            echo "No hay cambios pendientes para master."
+            exit 0
+          fi
+
+          pr=$(gh pr list --base master --head develop --state open --json number --jq '.[0].number // empty')
+          if [ -z "$pr" ]; then
+            gh pr create --base master --head develop \
+              --title "Integrar develop en master" \
+              --body "Integración automática tras superar las pruebas Flutter, SonarQube y OWASP ZAP en develop. La integración requiere superar también las comprobaciones obligatorias del pull request."
+            pr=$(gh pr list --base master --head develop --state open --json number --jq '.[0].number')
+          fi
+          gh pr merge "$pr" --auto --merge --match-head-commit "$EXPECTED_SHA"
