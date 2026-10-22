@@ -1,3 +1,4 @@
+import '../../checkout/views/checkout_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -490,22 +491,11 @@ class _CarritoView extends StatelessWidget {
                       letterSpacing: 0.5,
                     ),
                   ),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text(
-                          'El pago estará disponible en la fase 3',
-                        ),
-                        backgroundColor: AppColors.vino,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    );
-                  },
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(builder: (_) => const CheckoutView()),
+                  ),
                   icon: const Icon(Icons.lock_outline, size: 20),
-                  label: const Text('Hacer Pedido'),
+                  label: const Text('Pagar con PayPal'),
                 ),
               ),
             ),
@@ -719,8 +709,8 @@ class _ResumenPedido extends StatelessWidget {
   Widget build(BuildContext context) {
     final subtotal = cart.totalPrecio;
     const envio = 0.0;
-    final impuestos = subtotal * 0.16;
-    final total = subtotal + envio + impuestos;
+    // El backend no añade un impuesto adicional al total de los productos.
+    final total = subtotal + envio;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -759,11 +749,6 @@ class _ResumenPedido extends StatelessWidget {
             label: 'Total de envío',
             valor: 'Gratis',
             valorColor: AppColors.terracota,
-          ),
-          const SizedBox(height: 6),
-          _FilaResumen(
-            label: 'Impuestos (16%)',
-            valor: '\$${impuestos.toStringAsFixed(2)}',
           ),
           const SizedBox(height: 14),
           const Divider(color: AppColors.rosaBeigeClaro),

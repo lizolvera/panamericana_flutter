@@ -1,3 +1,4 @@
+import '../../checkout/views/checkout_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -78,6 +79,15 @@ class _ProfileMenu extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (_) => PasswordView(
                         profileVm: context.read<ProfileViewModel>()),
+                  ),
+                ),
+              ),
+              _OpcionTile(
+                icon: Icons.shopping_bag_outlined,
+                titulo: 'MIS COMPRAS',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const CheckoutView(soloPedidos: true),
                   ),
                 ),
               ),
