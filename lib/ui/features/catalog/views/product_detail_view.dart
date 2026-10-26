@@ -312,7 +312,9 @@ class _DetalleState extends State<_Detalle> with SingleTickerProviderStateMixin 
               ),
               const SizedBox(height: 8),
               if (tieneOferta) ...[
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
                   children: [
                     Text(
                       '\$${(producto.precioNormal ?? 0).toStringAsFixed(2)}',
@@ -321,7 +323,6 @@ class _DetalleState extends State<_Detalle> with SingleTickerProviderStateMixin 
                         color: AppColors.cafeOscuro.withValues(alpha: 0.42),
                       ),
                     ),
-                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 2),

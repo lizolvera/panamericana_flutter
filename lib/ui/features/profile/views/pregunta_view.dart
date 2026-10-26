@@ -81,6 +81,7 @@ class _PreguntaViewState extends State<PreguntaView> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
+                    isExpanded: true,
                     initialValue: _pregunta,
                     items: kPreguntasSecretas.entries
                         .map(
