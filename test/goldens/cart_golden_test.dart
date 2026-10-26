@@ -56,7 +56,7 @@ void main() {
     expect(find.text('Shampoo de prueba'), findsOneWidget);
     await expectLater(
       find.byKey(const Key('cart-golden')),
-      matchesGoldenFile('baselines/cart.png'),
+      matchesGoldenFile(goldenPath('cart.png')),
     );
     await tester.pumpWidget(const SizedBox());
     auth.dispose();

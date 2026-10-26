@@ -49,7 +49,7 @@ void main() {
       await tester.pumpAndSettle();
       await expectLater(
         find.byKey(const Key('golden')),
-        matchesGoldenFile('baselines/shell_${width.toInt()}.png'),
+        matchesGoldenFile(goldenPath('shell_${width.toInt()}.png')),
       );
     });
   }

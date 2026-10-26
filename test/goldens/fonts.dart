@@ -3,6 +3,11 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+// El rasterizado de fuentes difiere entre Skia en Linux y Windows.
+// Ambas referencias se revisan visualmente; CI nunca las regenera al aprobar.
+String goldenPath(String name) =>
+    'baselines/${Platform.isLinux ? 'linux/' : ''}$name';
+
 Future<void> loadGoldenFonts() async {
   TestWidgetsFlutterBinding.ensureInitialized();
   final roboto = FontLoader('Roboto');
