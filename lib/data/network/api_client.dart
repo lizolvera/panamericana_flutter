@@ -11,7 +11,10 @@ class ApiClient {
   ApiClient._internal() {
     dio = Dio(
       BaseOptions(
-        baseUrl: 'https://prybinaback.onrender.com',
+        baseUrl: const String.fromEnvironment(
+          'API_BASE_URL',
+          defaultValue: 'https://prybinaback.onrender.com',
+        ),
         connectTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 20),
         headers: {'Content-Type': 'application/json'},

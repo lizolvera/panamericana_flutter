@@ -1,0 +1,22 @@
+appId: com.panamericana.panamericana_flutter
+name: Invitado y validación del formulario
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Inicio"
+    timeout: 60000
+- assertVisible: "Carrito"
+- tapOn: "Perfil"
+- extendedWaitUntil:
+    visible: "Continuar"
+    timeout: 15000
+- tapOn: "Continuar"
+- assertVisible: "El correo es obligatorio"
+- assertVisible: "Ingresa tu contraseña"
+- tapOn: "Email @ Panamericana.com"
+- inputText: "correo-invalido"
+- hideKeyboard
+- tapOn: "Continuar"
+- assertVisible: "Ingresa un correo válido"
+- takeScreenshot: "reports/maestro/login-validacion"

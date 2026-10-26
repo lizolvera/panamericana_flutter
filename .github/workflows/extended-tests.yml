@@ -1,0 +1,112 @@
+name: Esfuerzo y rendimiento físico (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Tipo de prueba sobre staging
+        required: true
+        type: choice
+        options:
+          - stress
+          - android-profile
+      max_vus:
+        description: Máximo de usuarios virtuales (1 a 50)
+        type: string
+        default: '20'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-fixture-auth
+  cancel-in-progress: false
+
+env:
+  STAGING_API_URL: ${{ vars.STAGING_API_URL || 'https://prybina-staging.onrender.com' }}
+
+jobs:
+  stress:
+    if: inputs.suite == 'stress'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TEST_MODE: stress
+      STRESS_MAX_VUS: ${{ inputs.max_vus }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obtener sesiones vigentes de pruebas
+        uses: ./.github/actions/staging-auth
+        with:
+          mongo-uri: ${{ secrets.STAGING_MONGO_URI }}
+          password: ${{ secrets.STAGING_TEST_PASSWORD }}
+      - run: python3 .github/scripts/staging_api.py
+      - name: Esfuerzo acotado y recuperación
+        run: |
+          mkdir -p reports/k6
+          chmod a+rw reports/k6
+          docker run --rm -v "$GITHUB_WORKSPACE:/work" -w /work \
+            -e STAGING_API_URL -e STAGING_CLIENT_A_TOKEN -e TEST_MODE -e STRESS_MAX_VUS \
+            grafana/k6:1.3.0 run tests/performance/api.js
+      - name: Comprobar servicio tras la carga
+        if: always()
+        run: python3 .github/scripts/staging_api.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: k6-stress
+          path: |
+            reports/k6/summary.json
+            reports/api/result.json
+          if-no-files-found: warn
+
+      - name: Revocar sesiones sintéticas
+        if: always()
+        env:
+          STAGING_MONGO_URI: ${{ secrets.STAGING_MONGO_URI }}
+          STAGING_TEST_PASSWORD: ${{ secrets.STAGING_TEST_PASSWORD }}
+          NODE_PATH: ${{ github.workspace }}/.github/staging-auth/node_modules
+        run: node .github/scripts/authenticate_staging.cjs --revoke
+
+  profile:
+    if: inputs.suite == 'android-profile'
+    # Runner dedicado con Android físico conectado; no sustituir por emulador.
+    runs-on: [self-hosted, linux, android-physical]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obtener sesiones vigentes de pruebas
+        uses: ./.github/actions/staging-auth
+        with:
+          mongo-uri: ${{ secrets.STAGING_MONGO_URI }}
+          password: ${{ secrets.STAGING_TEST_PASSWORD }}
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - name: Exigir staging y un Android físico
+        run: |
+          python3 .github/scripts/staging_api.py
+          test "$(adb devices | awk '$2 == "device" {n++} END {print n+0}')" = "1"
+          test "$(adb shell getprop ro.kernel.qemu | tr -d '\r')" != "1"
+      - run: flutter pub get --enforce-lockfile
+      - name: Medir catálogo en modo profile
+        run: |
+          device=$(adb devices | awk '$2 == "device" {print $1}')
+          flutter drive -d "$device" --profile --no-dds \
+            --driver=test_driver/performance_driver.dart \
+            --target=integration_test/catalog_performance_test.dart \
+            --dart-define="API_BASE_URL=$STAGING_API_URL"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-physical-performance
+          path: reports/performance/**
+          if-no-files-found: warn
+      - name: Revocar sesiones sintéticas
+        if: always()
+        env:
+          STAGING_MONGO_URI: ${{ secrets.STAGING_MONGO_URI }}
+          STAGING_TEST_PASSWORD: ${{ secrets.STAGING_TEST_PASSWORD }}
+          NODE_PATH: ${{ github.workspace }}/.github/staging-auth/node_modules
+        run: node .github/scripts/authenticate_staging.cjs --revoke
