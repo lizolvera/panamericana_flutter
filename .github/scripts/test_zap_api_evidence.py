@@ -2,7 +2,7 @@ import json
 import unittest
 from unittest.mock import patch
 
-from zap_api_hook import response_metadata, routing_diagnostic, zap_pre_shutdown
+from zap_api_hook import response_metadata, routing_diagnostic, replay_canonical_host, zap_pre_shutdown
 
 BASE = "https://staging.example.test"
 
@@ -58,6 +58,24 @@ class ZapApiEvidenceTests(unittest.TestCase):
         self.assertTrue(result["backend_headers_present"])
         self.assertEqual(result["status"], 404)
         self.assertIsNone(routing_diagnostic(self.message(content_type="application/json"), BASE))
+
+    def test_replay_is_get_only_same_origin_and_strips_credentials(self):
+        class Core:
+            def send_request(inner, request, **_):
+                self.assertNotIn("SECRET", request)
+                self.assertNotIn("Cookie", request)
+                return [{"requestHeader": request, "responseHeader": "HTTP/1.1 401 Unauthorized\r\nContent-Type: application/json"}]
+        class Zap:
+            core = Core()
+        message = self.message("/api/usuarios/perfil")
+        self.assertEqual(replay_canonical_host(Zap(), message, BASE)["status"], 401)
+        message["requestHeader"] = message["requestHeader"].replace("GET ", "POST ", 1)
+        self.assertEqual(replay_canonical_host(Zap(), message, BASE)["result"], "not-replayed")
+
+    def test_default_tls_port_does_not_falsely_imply_host_injection(self):
+        message = self.message("/")
+        message["requestHeader"] += "\r\nHost: staging.example.test:443"
+        self.assertTrue(routing_diagnostic(message, BASE)["request_host_matches_staging"])
 
     def test_hook_counts_only_successfully_reached_protected_routes(self):
         class Core:
