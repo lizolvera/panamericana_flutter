@@ -14,7 +14,8 @@ name: Invitado y validación del formulario
 - tapOn: "Continuar"
 - assertVisible: "El correo es obligatorio"
 - assertVisible: "Ingresa tu contraseña"
-- tapOn: "Email @ Panamericana.com"
+- tapOn:
+    id: "login_email"
 - inputText: "correo-invalido"
 - hideKeyboard
 - tapOn: "Continuar"

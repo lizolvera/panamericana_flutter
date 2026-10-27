@@ -3,7 +3,7 @@ set -euo pipefail
 mkdir -p reports/android reports/maestro
 # El APK publicado se compila solo con URL; nunca contiene el token del test.
 adb install -r build/app/outputs/flutter-apk/app-debug.apk
-if ! "$HOME/.maestro/bin/maestro" test --format junit --output reports/maestro/results.xml .maestro/guest.yaml; then
+if ! python3 .github/scripts/run_maestro.py "$HOME/.maestro/bin/maestro"; then
   # Diagnóstico solo del flujo invitado, antes de cargar credenciales en la app.
   adb exec-out screencap -p > reports/maestro/failure-screen.png || true
   adb shell uiautomator dump /sdcard/guest-window.xml || true

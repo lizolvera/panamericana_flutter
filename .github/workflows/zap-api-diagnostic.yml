@@ -1,0 +1,81 @@
+name: Diagnóstico ZAP API (sin promoción)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/ofuscacion]
+    paths:
+      - .github/workflows/zap-api-diagnostic.yml
+      - .github/scripts/zap_api_hook.py
+
+permissions:
+  contents: read
+
+# Serialize synthetic sessions with the existing staging suite.
+concurrency:
+  group: staging-fixture-auth
+  cancel-in-progress: false
+
+env:
+  STAGING_API_URL: ${{ vars.STAGING_API_URL || 'https://prybina-staging.onrender.com' }}
+
+# Diagnostic run only. security.yml still requires Android and all other gates.
+jobs:
+  zap-api:
+    name: Diagnóstico API (no autoriza integración)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obtener sesiones vigentes de pruebas
+        uses: ./.github/actions/staging-auth
+        with:
+          mongo-uri: ${{ secrets.STAGING_MONGO_URI }}
+          password: ${{ secrets.STAGING_TEST_PASSWORD }}
+      - name: Preparar OpenAPI limitado a consultas propias
+        run: |
+          python3 .github/scripts/prepare_api_scan.py
+          chmod -R a+rw reports/zap-api
+      - name: Escanear únicamente staging, con sesión sintética
+        shell: bash
+        env:
+          ZAP_AUTH_HEADER_VALUE: ${{ env.STAGING_CLIENT_A_TOKEN }}
+          ZAP_AUTH_HEADER: Authorization
+        run: |
+          set -euo pipefail
+          export ZAP_AUTH_HEADER_SITE
+          ZAP_AUTH_HEADER_SITE=$(python3 -c 'import os; from urllib.parse import urlparse; print(urlparse(os.environ["STAGING_API_URL"]).hostname)')
+          docker run --rm --network host \
+            -v "$GITHUB_WORKSPACE:/zap/wrk:rw" \
+            -e STAGING_API_URL -e ZAP_AUTH_HEADER_VALUE -e ZAP_AUTH_HEADER -e ZAP_AUTH_HEADER_SITE \
+            ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py \
+            -t /zap/wrk/reports/zap-api/openapi.json -f openapi \
+            -J reports/zap-api/raw.json -I \
+            --hook=/zap/wrk/.github/scripts/zap_api_hook.py > "$RUNNER_TEMP/zap-api.log" 2>&1
+      - name: Exigir rutas protegidas alcanzadas y política de alertas API
+        run: |
+          python3 -c 'import json; r=json.load(open("reports/zap-api/reached.json")); assert r["passed"], "ZAP no alcanzó todas las rutas protegidas"'
+          python3 .github/scripts/check_api_zap.py reports/zap-api/raw.json
+      - name: Preparar evidencias sin credenciales ni datos personales
+        if: always()
+        run: python3 .github/scripts/summarize_zap_api.py
+      - name: Registrar trazabilidad
+        if: always()
+        run: python3 .github/scripts/evidence.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-api-staging
+          path: |
+            reports/zap-api/public/**
+            reports/manifest.json
+          if-no-files-found: warn
+
+      - name: Revocar sesiones sintéticas
+        if: always()
+        env:
+          STAGING_MONGO_URI: ${{ secrets.STAGING_MONGO_URI }}
+          STAGING_TEST_PASSWORD: ${{ secrets.STAGING_TEST_PASSWORD }}
+          NODE_PATH: ${{ github.workspace }}/.github/staging-auth/node_modules
+        run: node .github/scripts/authenticate_staging.cjs --revoke
+
