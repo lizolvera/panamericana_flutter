@@ -132,7 +132,7 @@ def zap_pre_shutdown(zap):
                 diagnostic = routing_diagnostic(message, base)
                 if diagnostic:
                     signature = diagnostic["request_target_sha256"]
-                    if diagnostic["status"] == 421 and signature not in replayed and len(replayed) < 3:
+                    if diagnostic["status"] == 421 and signature not in replayed and len(replayed) < 10:
                         replayed.add(signature)
                         diagnostic["canonical_host_replay"] = replay_canonical_host(zap, message, base)
                     diagnostics.append(diagnostic)

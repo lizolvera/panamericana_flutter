@@ -231,3 +231,29 @@ Google Play. Antes de distribuir se debe configurar la clave de carga de
 producción mediante secretos, elegir la API de destino y generar un nuevo AAB
 con sus propios símbolos desde la revisión aprobada. Este job no publica ni
 fusiona ramas; se mantiene el flujo develop → release → master existente.
+# Diagnóstico de respuestas 421 del intermediario
+
+La ejecución de diagnóstico `Diagnóstico ZAP API (sin promoción)` no reemplaza
+la validación completa ni puede integrar ramas. Permite investigar la API sin
+esperar la compilación del emulador. Usa las mismas sesiones sintéticas y las
+revoca al terminar.
+
+En staging se comprobó que ZAP altera el encabezado Host en ciertas sondas:
+Cloudflare las rechaza con HTTP 421 y una página HTML. Al repetir el mismo GET
+con el Host canónico, el backend devuelve 404 JSON. No es una respuesta HTML de
+un endpoint válido de la API.
+
+La política conserva la alerta 100001 en el reporte y únicamente considera
+revisadas sus instancias de riesgo bajo si **todas** cumplen, en la misma
+ejecución: origen exacto de staging, GET fuera de las rutas API declaradas,
+Host diferente, respuesta 421 HTML de Cloudflare sin cabeceras del backend,
+página explícita de solicitud mal dirigida y contraste con Host correcto que
+responde 404 application/json. Se correlacionan por SHA-256 de la URI completa.
+Si falta evidencia, una instancia no coincide, la severidad aumenta o aparece
+otra alerta, el pipeline sigue bloqueando. El límite de repeticiones es diez
+URI distintas y no se copian cookies, cuerpos ni cabeceras de autenticación.
+
+`zap-api-staging` incluye `routing.json` y `policy.json` para auditar la decisión,
+sin cuerpos ni direcciones sensibles. No se desactiva la regla en ZAP ni se
+retira ninguna ruta protegida del escaneo.
+

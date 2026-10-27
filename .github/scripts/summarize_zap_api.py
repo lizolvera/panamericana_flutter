@@ -29,6 +29,9 @@ if responses.exists():
                          '<tr><th>Método</th><th>Ruta</th><th>HTTP</th><th>Content-Type</th><th>Casos</th></tr>' + rows + '</table>')
 reached = Path("reports/zap-api/reached.json")
 diagnostic = Path("reports/zap-api/routing.json")
+policy = Path("reports/zap-api/policy.json")
+if policy.exists():
+    (out / "policy.json").write_text(policy.read_text(encoding="utf-8"), encoding="utf-8")
 if diagnostic.exists():
     (out / "routing.json").write_text(diagnostic.read_text(encoding="utf-8"), encoding="utf-8")
 if reached.exists():
