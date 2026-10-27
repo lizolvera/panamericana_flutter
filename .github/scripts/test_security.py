@@ -8,11 +8,29 @@ import unittest
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
-from check_zap import check
+from check_zap import check, generated_worker_version
 from serve_web import WebHandler
 
 
 class SecurityTests(unittest.TestCase):
+    def test_timestamp_requires_exact_generated_version_and_local_asset(self):
+        alert = {"alertRef": "10096", "riskcode": "1", "confidence": "1", "instances": [{
+            "uri": "http://127.0.0.1:8080/flutter_bootstrap.js", "method": "GET",
+            "param": "", "evidence": "2103026979"}]}
+        bootstrap = 'serviceWorkerSettings: {serviceWorkerVersion: "2103026979"}'
+        self.assertTrue(generated_worker_version(alert, bootstrap))
+        self.assertFalse(generated_worker_version(alert, None))
+        self.assertFalse(generated_worker_version(alert, 'const timestamp = "2103026979"'))
+        self.assertFalse(generated_worker_version(alert, 'serviceWorkerVersion: "1234"'))
+        for key, value in [("uri", "https://example.com/flutter_bootstrap.js"),
+                           ("uri", "http://127.0.0.1:8080/api/account"),
+                           ("method", "POST"), ("param", "birthdate")]:
+            changed = json.loads(json.dumps(alert))
+            changed["instances"][0][key] = value
+            self.assertFalse(generated_worker_version(changed, bootstrap))
+        alert["riskcode"] = "2"
+        self.assertFalse(generated_worker_version(alert, bootstrap))
+
     def test_headers_on_success_and_error(self):
         with TemporaryDirectory() as directory:
             Path(directory, "index.html").write_text("<html></html>")

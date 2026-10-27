@@ -17,7 +17,7 @@ class MaestroRecoveryTests(TestCase):
             if "clear" in command:
                 return CompletedProcess(command, 0, "Success", "")
             if "start" in command:
-                return CompletedProcess(command, 0, "Status: ok", "")
+                return CompletedProcess(command, 0, "Starting: Intent { cmp=app/.MainActivity }", "")
             return CompletedProcess(command, 0, "1", "")
 
         with patch.object(Path, "glob", return_value=[]):
@@ -38,7 +38,7 @@ class MaestroRecoveryTests(TestCase):
 
     def test_android_start_error_blocks_flow_even_with_zero_exit(self):
         def run(command, **_):
-            return CompletedProcess(command, 0, "Success" if "clear" in command else "Error: Activity not found", "")
+            return CompletedProcess(command, 0, "Success" if "clear" in command else "Starting: Intent\nError: Activity not found", "")
         self.assertFalse(start_guest(run, lambda _: None))
 
     def test_assertion_failure_is_not_retried(self):

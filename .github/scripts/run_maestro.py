@@ -13,7 +13,9 @@ def start_guest(run, output):
     for args, expected in [
         (["shell", "am", "force-stop", APP], None),
         (["shell", "pm", "clear", APP], "Success"),
-        (["shell", "am", "start", "-W", "-n", APP + "/.MainActivity"], "Status: ok"),
+        # am start -W has a short Android-side first-frame timeout on a cold
+        # Flutter debug build. Let Maestro's visible-screen wait verify readiness.
+        (["shell", "am", "start", "-n", APP + "/.MainActivity"], "Starting: Intent"),
     ]:
         try:
             result = run(["adb", "-s", DEVICE, *args],
@@ -21,7 +23,8 @@ def start_guest(run, output):
         except subprocess.TimeoutExpired:
             output("El arranque limpio de Android agotó el tiempo de espera.")
             return False
-        if result.returncode or (expected and expected not in result.stdout):
+        if (result.returncode or "Error:" in result.stdout + result.stderr
+                or (expected and expected not in result.stdout)):
             output("No se pudo preparar la app invitada: " + result.stdout + result.stderr)
             return False
     return True

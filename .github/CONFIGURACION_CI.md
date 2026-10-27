@@ -257,3 +257,17 @@ URI distintas y no se copian cookies, cuerpos ni cabeceras de autenticación.
 sin cuerpos ni direcciones sensibles. No se desactiva la regla en ZAP ni se
 retira ninguna ruta protegida del escaneo.
 
+### Arranque Android y versión de caché Flutter
+
+El flujo invitado limpia los datos e inicia MainActivity con el ADB del SDK.
+El inicio es asíncrono: Maestro exige que aparezca Panamericana en 60 segundos
+y conserva todas las comprobaciones del carrito y de validación del formulario.
+Un error al limpiar o iniciar, o una pantalla que no aparece, bloquea la etapa.
+
+La alerta web 10096 se conserva en el reporte. Solo se acepta como falso positivo
+de riesgo y confianza bajos cuando cada instancia es GET sin parámetro al archivo
+local `/flutter_bootstrap.js` y su evidencia coincide exactamente con el valor
+`serviceWorkerVersion` del archivo generado en esa misma compilación. Flutter
+genera ese valor aleatorio para la caché; no es una fecha de usuario ni del servidor.
+Sin el archivo, con otra ruta, valor, confianza o riesgo, la alerta sigue bloqueando.
+
