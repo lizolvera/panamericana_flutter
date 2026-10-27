@@ -1,0 +1,46 @@
+name: Verificar autenticación de staging
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - .github/workflows/staging-auth-check.yml
+      - .github/actions/staging-auth/**
+      - .github/staging-auth/**
+      - .github/scripts/authenticate_staging.cjs
+      - .github/scripts/test_staging_auth.cjs
+      - .github/scripts/staging_api.py
+permissions:
+  contents: read
+concurrency:
+  group: staging-fixture-auth
+  cancel-in-progress: false
+env:
+  STAGING_API_URL: ${{ vars.STAGING_API_URL || 'https://prybina-staging.onrender.com' }}
+jobs:
+  verify:
+    name: Autenticación y aislamiento de clientes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Crear sesiones de pruebas vigentes
+        uses: ./.github/actions/staging-auth
+        with:
+          mongo-uri: ${{ secrets.STAGING_MONGO_URI }}
+          password: ${{ secrets.STAGING_TEST_PASSWORD }}
+      - name: Validar contrato y autorización
+        run: python3 .github/scripts/staging_api.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: staging-auth-contract
+          path: reports/api/result.json
+          retention-days: 7
+      - name: Revocar sesiones de esta ejecución
+        if: always()
+        env:
+          STAGING_MONGO_URI: ${{ secrets.STAGING_MONGO_URI }}
+          STAGING_TEST_PASSWORD: ${{ secrets.STAGING_TEST_PASSWORD }}
+          NODE_PATH: ${{ github.workspace }}/.github/staging-auth/node_modules
+        run: node .github/scripts/authenticate_staging.cjs --revoke

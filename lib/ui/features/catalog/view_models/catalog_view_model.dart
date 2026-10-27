@@ -19,6 +19,13 @@ class CatalogViewModel extends ChangeNotifier {
   CatalogViewModel(this._repository);
 
   final CatalogRepository _repository;
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 
   CatalogStatus _status = CatalogStatus.initial;
   String? _errorMessage;
@@ -133,6 +140,7 @@ class CatalogViewModel extends ChangeNotifier {
 
   /// Carga inicial (o reintento) de todo el catálogo en paralelo.
   Future<void> loadCatalog() async {
+    if (_disposed) return;
     _status = CatalogStatus.loading;
     _errorMessage = null;
     notifyListeners();
@@ -145,6 +153,8 @@ class CatalogViewModel extends ChangeNotifier {
         _repository.getCarruseles(),
         _repository.getOfertas(),
       ]);
+
+      if (_disposed) return;
 
       _productos = resultados[0] as List<Producto>;
       _marcas = resultados[1] as List<Marca>;
@@ -162,19 +172,24 @@ class CatalogViewModel extends ChangeNotifier {
           semillas.isNotEmpty ? semillas : _productos.take(6).toList();
       if (semillasFinal.isNotEmpty) {
         try {
-          _recomendados = await _repository.getRecomendaciones(
+          final recomendaciones = await _repository.getRecomendaciones(
             productoIds:
                 semillasFinal.map((p) => p.id).whereType<String>().toList(),
             limite: 8,
           );
+          if (_disposed) return;
+          _recomendados = recomendaciones;
         } catch (_) {
+          if (_disposed) return;
           _recomendados = [];
         }
       }
 
+      if (_disposed) return;
       _status = CatalogStatus.loaded;
       notifyListeners();
     } catch (e) {
+      if (_disposed) return;
       _status = CatalogStatus.error;
       _errorMessage = _extractError(e);
       notifyListeners();

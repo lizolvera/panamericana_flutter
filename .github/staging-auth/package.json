@@ -1,0 +1,6 @@
+{
+  "name": "panamericana-staging-auth",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {"mongoose": "8.20.1", "bcryptjs": "3.0.3"}
+}

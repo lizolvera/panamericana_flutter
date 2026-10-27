@@ -1,0 +1,236 @@
+name: Android y API de staging
+
+on:
+  workflow_call:
+    secrets:
+      STAGING_MONGO_URI:
+        required: true
+      STAGING_TEST_PASSWORD:
+        required: true
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - .github/workflows/staging.yml
+      - .github/scripts/run_android.sh
+      - integration_test/**
+      - .maestro/**
+      - android/**
+      - pubspec.yaml
+      - pubspec.lock
+
+concurrency:
+  group: staging-fixture-auth
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  STAGING_API_URL: ${{ vars.STAGING_API_URL || 'https://prybina-staging.onrender.com' }}
+
+jobs:
+  api:
+    name: Contrato y aislamiento API
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obtener sesiones vigentes de pruebas
+        uses: ./.github/actions/staging-auth
+        with:
+          mongo-uri: ${{ secrets.STAGING_MONGO_URI }}
+          password: ${{ secrets.STAGING_TEST_PASSWORD }}
+      - name: Verificar acceso y aislamiento entre clientes
+        run: python3 .github/scripts/staging_api.py
+      - name: Registrar trazabilidad
+        if: always()
+        run: python3 .github/scripts/evidence.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: staging-api-contract
+          path: |
+            reports/api/result.json
+            reports/manifest.json
+          if-no-files-found: warn
+
+      - name: Revocar sesiones sintéticas
+        if: always()
+        env:
+          STAGING_MONGO_URI: ${{ secrets.STAGING_MONGO_URI }}
+          STAGING_TEST_PASSWORD: ${{ secrets.STAGING_TEST_PASSWORD }}
+          NODE_PATH: ${{ github.workspace }}/.github/staging-auth/node_modules
+        run: node .github/scripts/authenticate_staging.cjs --revoke
+
+  android:
+    name: Android integración y Maestro
+    needs: api
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obtener sesiones vigentes de pruebas
+        uses: ./.github/actions/staging-auth
+        with:
+          mongo-uri: ${{ secrets.STAGING_MONGO_URI }}
+          password: ${{ secrets.STAGING_TEST_PASSWORD }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - name: Preparar configuración efímera del test
+        run: python3 .github/scripts/create_android_inputs.py
+      - name: Compilar APK de pruebas sin credenciales
+        run: flutter build apk --debug --dart-define="API_BASE_URL=$STAGING_API_URL"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-staging-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 7
+      - name: Instalar Maestro 2.11.0
+        run: |
+          curl --fail --location --retry 3 -o "$RUNNER_TEMP/maestro.zip" https://github.com/mobile-dev-inc/Maestro/releases/download/cli-2.11.0/maestro.zip
+          unzip -q "$RUNNER_TEMP/maestro.zip" -d "$RUNNER_TEMP/maestro-dist"
+          mkdir -p "$HOME/.maestro"
+          cp -R "$RUNNER_TEMP/maestro-dist/maestro/." "$HOME/.maestro/"
+          chmod +x "$HOME/.maestro/bin/maestro"
+      - name: Habilitar aceleración del emulador
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: bash .github/scripts/run_android.sh
+      - name: Registrar trazabilidad
+        if: always()
+        run: python3 .github/scripts/evidence.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-test-results
+          path: |
+            reports/android/**
+            reports/manifest.json
+            reports/maestro/**
+          if-no-files-found: warn
+      - name: Eliminar configuración efímera
+        if: always()
+        run: rm -f "$RUNNER_TEMP/staging-inputs.json"
+
+      - name: Revocar sesiones sintéticas
+        if: always()
+        env:
+          STAGING_MONGO_URI: ${{ secrets.STAGING_MONGO_URI }}
+          STAGING_TEST_PASSWORD: ${{ secrets.STAGING_TEST_PASSWORD }}
+          NODE_PATH: ${{ github.workspace }}/.github/staging-auth/node_modules
+        run: node .github/scripts/authenticate_staging.cjs --revoke
+
+  zap-api:
+    name: ZAP API autenticada
+    needs: [api, android]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obtener sesiones vigentes de pruebas
+        uses: ./.github/actions/staging-auth
+        with:
+          mongo-uri: ${{ secrets.STAGING_MONGO_URI }}
+          password: ${{ secrets.STAGING_TEST_PASSWORD }}
+      - name: Preparar OpenAPI limitado a consultas propias
+        run: |
+          python3 .github/scripts/prepare_api_scan.py
+          chmod -R a+rw reports/zap-api
+      - name: Escanear únicamente staging, con sesión sintética
+        shell: bash
+        env:
+          ZAP_AUTH_HEADER_VALUE: ${{ env.STAGING_CLIENT_A_TOKEN }}
+          ZAP_AUTH_HEADER: Authorization
+        run: |
+          set -euo pipefail
+          export ZAP_AUTH_HEADER_SITE
+          ZAP_AUTH_HEADER_SITE=$(python3 -c 'import os; from urllib.parse import urlparse; print(urlparse(os.environ["STAGING_API_URL"]).hostname)')
+          docker run --rm --network host \
+            -v "$GITHUB_WORKSPACE:/zap/wrk:rw" \
+            -e STAGING_API_URL -e ZAP_AUTH_HEADER_VALUE -e ZAP_AUTH_HEADER -e ZAP_AUTH_HEADER_SITE \
+            ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py \
+            -t /zap/wrk/reports/zap-api/openapi.json -f openapi \
+            -J reports/zap-api/raw.json -I \
+            --hook=/zap/wrk/.github/scripts/zap_api_hook.py > "$RUNNER_TEMP/zap-api.log" 2>&1
+      - name: Exigir rutas protegidas alcanzadas y política de alertas API
+        run: |
+          python3 -c 'import json; r=json.load(open("reports/zap-api/reached.json")); assert r["passed"], "ZAP no alcanzó todas las rutas protegidas"'
+          python3 .github/scripts/check_api_zap.py reports/zap-api/raw.json
+      - name: Preparar evidencias sin credenciales ni datos personales
+        if: always()
+        run: python3 .github/scripts/summarize_zap_api.py
+      - name: Registrar trazabilidad
+        if: always()
+        run: python3 .github/scripts/evidence.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-api-staging
+          path: |
+            reports/zap-api/public/**
+            reports/manifest.json
+          if-no-files-found: warn
+
+      - name: Revocar sesiones sintéticas
+        if: always()
+        env:
+          STAGING_MONGO_URI: ${{ secrets.STAGING_MONGO_URI }}
+          STAGING_TEST_PASSWORD: ${{ secrets.STAGING_TEST_PASSWORD }}
+          NODE_PATH: ${{ github.workspace }}/.github/staging-auth/node_modules
+        run: node .github/scripts/authenticate_staging.cjs --revoke
+
+  k6:
+    name: Carga habitual k6
+    needs: zap-api
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obtener sesiones vigentes de pruebas
+        uses: ./.github/actions/staging-auth
+        with:
+          mongo-uri: ${{ secrets.STAGING_MONGO_URI }}
+          password: ${{ secrets.STAGING_TEST_PASSWORD }}
+      - name: Ejecutar carga con umbrales
+        run: |
+          mkdir -p reports/k6
+          chmod a+rw reports/k6
+          docker run --rm -v "$GITHUB_WORKSPACE:/work" -w /work \
+            -e STAGING_API_URL -e STAGING_CLIENT_A_TOKEN \
+            grafana/k6:1.3.0 run tests/performance/api.js
+      - name: Registrar trazabilidad
+        if: always()
+        run: python3 .github/scripts/evidence.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: k6-normal
+          path: |
+            reports/k6/summary.json
+            reports/manifest.json
+          if-no-files-found: warn
+      - name: Revocar sesiones sintéticas
+        if: always()
+        env:
+          STAGING_MONGO_URI: ${{ secrets.STAGING_MONGO_URI }}
+          STAGING_TEST_PASSWORD: ${{ secrets.STAGING_TEST_PASSWORD }}
+          NODE_PATH: ${{ github.workspace }}/.github/staging-auth/node_modules
+        run: node .github/scripts/authenticate_staging.cjs --revoke

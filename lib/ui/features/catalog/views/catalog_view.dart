@@ -642,7 +642,7 @@ SliverGridDelegate _calcularGridDelegate(BuildContext context) {
 
   if (width >= 900) {
     crossAxisCount = 4;
-    childAspectRatio = 0.72;
+    childAspectRatio = 0.68;
   } else if (width >= 600) {
     crossAxisCount = 3;
     childAspectRatio = 0.68;

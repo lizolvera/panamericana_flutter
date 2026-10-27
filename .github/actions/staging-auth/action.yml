@@ -1,0 +1,30 @@
+name: Sesiones sintéticas de staging
+description: Obtiene sesiones vigentes sin modificar la autenticación del backend
+inputs:
+  mongo-uri:
+    required: true
+    description: URI exclusiva de panamericana_staging
+  password:
+    required: true
+    description: Contraseña de los dos clientes sintéticos
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - name: Instalar dependencias de autenticación
+      shell: bash
+      run: npm ci --prefix .github/staging-auth --ignore-scripts --no-audit --no-fund
+    - name: Comprobar restricciones de staging
+      shell: bash
+      env:
+        NODE_PATH: ${{ github.workspace }}/.github/staging-auth/node_modules
+      run: node --test .github/scripts/test_staging_auth.cjs
+    - name: Verificar códigos y obtener sesiones efímeras
+      shell: bash
+      env:
+        STAGING_MONGO_URI: ${{ inputs.mongo-uri }}
+        STAGING_TEST_PASSWORD: ${{ inputs.password }}
+        NODE_PATH: ${{ github.workspace }}/.github/staging-auth/node_modules
+      run: node .github/scripts/authenticate_staging.cjs

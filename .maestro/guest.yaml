@@ -1,0 +1,23 @@
+appId: com.panamericana.panamericana_flutter
+name: Invitado y validación del formulario
+---
+# run_maestro.py clears and launches the app through SDK adb before this flow.
+# Avoid Maestro's launchApp transport failure; keep every UI assertion below.
+- extendedWaitUntil:
+    visible: "Panamericana"
+    timeout: 60000
+- assertVisible: "(?s).*Carrito.*"
+- tapOn: "(?s).*Perfil.*"
+- extendedWaitUntil:
+    visible: "Continuar"
+    timeout: 15000
+- tapOn: "Continuar"
+- assertVisible: "El correo es obligatorio"
+- assertVisible: "Ingresa tu contraseña"
+- tapOn:
+    id: "login_email"
+- inputText: "correo-invalido"
+- hideKeyboard
+- tapOn: "Continuar"
+- assertVisible: "Ingresa un correo válido"
+- takeScreenshot: "reports/maestro/login-validacion"
