@@ -28,5 +28,8 @@ if responses.exists():
             report.write('<h2>Respuestas observadas (sin datos personales)</h2><table>'
                          '<tr><th>Método</th><th>Ruta</th><th>HTTP</th><th>Content-Type</th><th>Casos</th></tr>' + rows + '</table>')
 reached = Path("reports/zap-api/reached.json")
+diagnostic = Path("reports/zap-api/routing.json")
+if diagnostic.exists():
+    (out / "routing.json").write_text(diagnostic.read_text(encoding="utf-8"), encoding="utf-8")
 if reached.exists():
     (out / "reached.json").write_text(reached.read_text(), encoding="utf-8")
