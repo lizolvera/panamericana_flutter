@@ -168,36 +168,39 @@ class _LoginViewState extends State<LoginView> {
                     // ── Formulario paso 1 ─────────────────────────────────────
                     if (!paso2) ...[
                       // Campo correo
-                      TextFormField(
-                        controller: _emailCtrl,
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        autofillHints: const [AutofillHints.email],
-                        decoration: InputDecoration(
-                          hintText: 'Email @ Panamericana.com',
-                          prefixIcon: const Icon(
-                            Icons.email_outlined,
-                            color: AppColors.terracota,
+                      Semantics(
+                        identifier: 'login_email',
+                        child: TextFormField(
+                          controller: _emailCtrl,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.email],
+                          decoration: InputDecoration(
+                            hintText: 'Email @ Panamericana.com',
+                            prefixIcon: const Icon(
+                              Icons.email_outlined,
+                              color: AppColors.terracota,
+                            ),
+                            filled: true,
+                            fillColor: AppColors.blancoCalido,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                  color: AppColors.rosaBeigeClaro),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                  color: AppColors.rosaBeigeClaro),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                  color: AppColors.vino, width: 1.5),
+                            ),
                           ),
-                          filled: true,
-                          fillColor: AppColors.blancoCalido,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                                color: AppColors.rosaBeigeClaro),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                                color: AppColors.rosaBeigeClaro),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                                color: AppColors.vino, width: 1.5),
-                          ),
+                          validator: FormValidators.requiredEmail,
                         ),
-                        validator: FormValidators.requiredEmail,
                       ),
                       const SizedBox(height: 14),
                       // Campo contraseña / 2FA

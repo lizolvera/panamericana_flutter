@@ -1,5 +1,7 @@
 """Gate de CI: bloquea riesgos salvo excepciones puntuales documentadas."""
 import json
+from pathlib import Path
+import re
 import sys
 from urllib.parse import urlparse
 
@@ -11,7 +13,22 @@ EXCEPTIONS = {
 }
 
 
-def check(report):
+def generated_worker_version(alert, bootstrap):
+    """Confirm a numeric Flutter cache version, never exempt arbitrary timestamps."""
+    if (str(alert.get("alertRef")) != "10096" or str(alert.get("riskcode")) != "1"
+            or str(alert.get("confidence")) != "1" or not bootstrap):
+        return False
+    versions = set(re.findall(r'\bserviceWorkerVersion\s*:\s*[\"\'](\d+)[\"\']', bootstrap))
+    instances = alert.get("instances", [])
+    return bool(instances) and all(
+        item.get("uri") == "http://127.0.0.1:8080/flutter_bootstrap.js"
+        and item.get("method") == "GET" and not item.get("param")
+        and item.get("evidence") in versions
+        for item in instances
+    )
+
+
+def check(report, bootstrap=None):
     sites = report.get("site")
     if not isinstance(sites, list) or not sites:
         raise ValueError("Reporte sin sitios analizados")
@@ -29,6 +46,8 @@ def check(report):
             )
             if risk == 0:
                 print(f"INFO {ref}: {alert['name']}")
+            elif generated_worker_version(alert, bootstrap):
+                print(f"EXCEPCIÓN {ref}: versión de caché del service worker comprobada contra el bootstrap de esta compilación.")
             elif reason and risk <= reason[0] and local:
                 print(f"EXCEPCIÓN {ref}: {reason[1]}")
             else:
@@ -40,5 +59,6 @@ def check(report):
 if __name__ == "__main__":
     # Archivo ausente, JSON inválido o formato inesperado también falla el job.
     with open(sys.argv[1], encoding="utf-8-sig") as source:
-        blocked = check(json.load(source))
+        bootstrap = Path("build/web/flutter_bootstrap.js")
+        blocked = check(json.load(source), bootstrap.read_text(encoding="utf-8") if bootstrap.is_file() else None)
     sys.exit(1 if blocked else 0)

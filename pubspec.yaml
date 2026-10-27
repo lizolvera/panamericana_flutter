@@ -43,6 +43,11 @@ dependencies:
   webview_flutter: ^4.14.1
 
 dev_dependencies:
+  integration_test:
+    sdk: flutter
+  flutter_driver:
+    sdk: flutter
+  mocktail: ^1.0.4
   flutter_test:
     sdk: flutter
 

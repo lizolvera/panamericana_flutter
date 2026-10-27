@@ -2,9 +2,9 @@ name: Seguridad Flutter (SAST y DAST)
 
 on:
   push:
-    branches: [master, develop, M2-V2, M2-V1, main]
+    branches: [master, release, develop, M2-V2, M2-V1]
   pull_request:
-    branches: [master, develop, M2-V2, M2-V1, main]
+    branches: [master, release, develop, M2-V2, M2-V1]
   workflow_dispatch:
 
 permissions:
@@ -15,6 +15,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  branch-policy:
+    name: Flujo de ramas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exigir develop a release y release a master
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_BRANCH: ${{ github.base_ref }}
+          HEAD_BRANCH: ${{ github.head_ref }}
+          SAME_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+        run: python3 .github/scripts/branch_policy.py
+
   pruebas:
     name: Pruebas Flutter
     runs-on: ubuntu-latest
@@ -28,9 +41,93 @@ jobs:
           cache: true
       - run: flutter pub get --enforce-lockfile
       - run: flutter analyze --fatal-infos
-      - run: flutter test
+      - run: python3 -m unittest discover -s .github/scripts -p "test_*.py"
+      - name: Pruebas unitarias, widgets y Golden Tests con cobertura
+        run: flutter test --coverage --machine > test-results.json
+      - name: Registrar trazabilidad
+        if: always()
+        run: python3 .github/scripts/evidence.py
+      - name: Conservar resultados de pruebas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-tests
+          path: |
+            coverage/lcov.info
+            reports/manifest.json
+            test-results.json
+            test/goldens/failures/**
+            test/goldens/**/failures/**
+          if-no-files-found: warn
+          retention-days: 14
+
+  android-ofuscado:
+    name: AAB Android ofuscado
+    needs: pruebas
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      STAGING_API_URL: ${{ vars.STAGING_API_URL || 'https://prybina-staging.onrender.com' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      # Valida compilación release; la firma actual de Gradle es de debug.
+      # La firma de distribución y la publicación en Play son pasos posteriores.
+      - name: Compilar AAB release con ofuscación Dart
+        run: >-
+          flutter build appbundle --release --obfuscate
+          --split-debug-info=build/symbols
+          --dart-define="API_BASE_URL=$STAGING_API_URL"
+      - name: Exigir bundle y símbolos generados
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s build/app/outputs/bundle/release/app-release.aab
+          test -n "$(find build/symbols -type f -name 'app.*.symbols' -size +0c -print -quit)"
+      - name: Conservar AAB de validación
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-aab-obfuscated-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 30
+      - name: Conservar símbolos de la misma compilación
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-symbols-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/symbols/*.symbols
+          if-no-files-found: error
+          retention-days: 30
+
+  cobertura:
+    name: Cobertura mínima 80%
+    needs: pruebas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: flutter-tests
+      - run: python3 .github/scripts/check_coverage.py coverage/lcov.info
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-summary
+          path: coverage/summary.json
+          if-no-files-found: warn
 
   sonarqube:
+    needs: pruebas
     name: SAST con SonarQube
 
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -42,6 +139,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Recuperar cobertura de la misma revisión
+        uses: actions/download-artifact@v4
+        with:
+          name: flutter-tests
       - name: Validar configuración de SonarQube
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -76,6 +177,7 @@ jobs:
             -Dsonar.qualitygate.timeout=300
 
   zap:
+    needs: [pruebas, sonarqube]
     name: DAST con OWASP ZAP
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -143,14 +245,39 @@ jobs:
             kill "$(cat "$RUNNER_TEMP/flutter-web.pid")" || true
           fi
 
-  integrar-master:
-    name: Preparar integración automática a master
-    needs: [pruebas, sonarqube, zap]
+  staging:
+    name: Pruebas staging
+    needs: [pruebas, cobertura, sonarqube]
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    uses: ./.github/workflows/staging.yml
+    secrets: inherit
+
+  validacion-completa:
+    name: Validación completa
+    if: always()
+    needs: [branch-policy, pruebas, cobertura, sonarqube, zap, staging, android-ofuscado]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Exigir aprobación de todas las etapas obligatorias
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json, os, sys
+          results = json.loads(os.environ['RESULTS'])
+          failed = {k: v['result'] for k, v in results.items() if v['result'] != 'success'}
+          print('Etapas pendientes o fallidas:', failed)
+          sys.exit(1 if failed else 0)
+          PY
+
+  integrar-release:
+    name: Preparar integración automática a release
+    needs: [validacion-completa]
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     concurrency:
-      group: promover-develop-master
+      group: promover-develop-release
       cancel-in-progress: false
     steps:
       # Un token de GitHub App o PAT permite que el PR dispare sus validaciones
@@ -164,12 +291,12 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "$GH_TOKEN" ]; then
-            echo "::error::Configura AUTO_MERGE_TOKEN y las protecciones de master según .github/CONFIGURACION_CI.md."
+            echo "::error::Configura AUTO_MERGE_TOKEN y las protecciones de release según .github/CONFIGURACION_CI.md."
             exit 1
           fi
 
-          # Fallar de forma segura si master no exige las validaciones del PR.
-          protection=$(gh api "repos/$GH_REPO/branches/master/protection")
+          # Fallar de forma segura si release no exige las validaciones del PR.
+          protection=$(gh api "repos/$GH_REPO/branches/release/protection")
           if ! jq -e '
             .required_pull_request_reviews != null and
             .required_status_checks.strict == true and
@@ -178,9 +305,11 @@ jobs:
               ((.contexts // []) + [(.checks // [])[] | .context]) |
               (index("Pruebas Flutter") != null and
                index("SAST con SonarQube") != null and
-               index("DAST con OWASP ZAP") != null))
+               index("DAST con OWASP ZAP") != null and
+               index("Validación completa") != null and
+               index("Flujo de ramas") != null))
           ' <<< "$protection" > /dev/null; then
-            echo "::error::master debe exigir PR, rama actualizada y los tres checks, incluyendo administradores. Consulta .github/CONFIGURACION_CI.md."
+            echo "::error::release debe exigir PR, rama actualizada, los tres checks y Validación completa, incluyendo administradores. Consulta .github/CONFIGURACION_CI.md."
             exit 1
           fi
 
@@ -191,17 +320,17 @@ jobs:
             exit 0
           fi
 
-          ahead=$(gh api "repos/$GH_REPO/compare/master...develop" --jq '.ahead_by')
+          ahead=$(gh api "repos/$GH_REPO/compare/release...develop" --jq '.ahead_by')
           if [ "$ahead" = "0" ]; then
-            echo "No hay cambios pendientes para master."
+            echo "No hay cambios pendientes para release."
             exit 0
           fi
 
-          pr=$(gh pr list --base master --head develop --state open --json number --jq '.[0].number // empty')
+          pr=$(gh pr list --base release --head develop --state open --json number --jq '.[0].number // empty')
           if [ -z "$pr" ]; then
-            gh pr create --base master --head develop \
-              --title "Integrar develop en master" \
+            gh pr create --base release --head develop \
+              --title "Integrar develop en release" \
               --body "Integración automática tras superar las pruebas Flutter, SonarQube y OWASP ZAP en develop. La integración requiere superar también las comprobaciones obligatorias del pull request."
-            pr=$(gh pr list --base master --head develop --state open --json number --jq '.[0].number')
+            pr=$(gh pr list --base release --head develop --state open --json number --jq '.[0].number')
           fi
           gh pr merge "$pr" --auto --merge --match-head-commit "$EXPECTED_SHA"
