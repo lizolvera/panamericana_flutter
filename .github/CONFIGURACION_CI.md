@@ -197,3 +197,37 @@ https://grafana.com/docs/k6/latest/using-k6/thresholds/
 https://www.zaproxy.org/docs/docker/api-scan/
 https://www.zaproxy.org/docs/docker/scan-hooks/
 https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid
+
+## 9. AAB Android con ofuscación
+
+La rama feature/ofuscacion parte de develop. Su PR hacia develop ejecuta el
+workflow security.yml, incluido el job «AAB Android ofuscado» tras Pruebas Flutter.
+También se ejecuta en los push de las ramas configuradas y por ejecución manual.
+Validación completa exige que este job termine correctamente, incluida la carga
+de ambos artefactos. No cambia los gates de cobertura, seguridad ni staging.
+
+El job ejecuta:
+
+```bash
+flutter build appbundle --release --obfuscate --split-debug-info=build/symbols \
+  --dart-define="API_BASE_URL=$STAGING_API_URL"
+```
+
+Genera build/app/outputs/bundle/release/app-release.aab y build/symbols/*.symbols.
+Comprueba que el AAB y al menos un archivo de símbolos no estén vacíos. Esto
+valida la compilación ofuscada; no prueba su comportamiento en un dispositivo.
+Las pruebas Android existentes siguen ejecutándose sobre su APK debug.
+
+Los resultados se descargan desde Actions → ejecución → Artifacts, por separado:
+android-aab-obfuscated-<sha>-<run_id>-<intento> y
+android-symbols-<sha>-<run_id>-<intento>. Se conservan 30 días. No subir los
+binarios ni símbolos a Git. Respaldar los símbolos de toda versión distribuida
+en almacenamiento privado duradero antes de su expiración; deben corresponder
+exactamente a esa compilación y arquitectura para interpretar sus errores.
+
+Este AAB apunta a staging y usa la firma debug que actualmente configura
+android/app/build.gradle.kts. Es un artefacto de validación, no una entrega para
+Google Play. Antes de distribuir se debe configurar la clave de carga de
+producción mediante secretos, elegir la API de destino y generar un nuevo AAB
+con sus propios símbolos desde la revisión aprobada. Este job no publica ni
+fusiona ramas; se mantiene el flujo develop → release → master existente.
