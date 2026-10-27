@@ -2,7 +2,7 @@ from pathlib import Path
 from subprocess import CompletedProcess
 from unittest import TestCase
 from unittest.mock import patch
-from run_maestro import run_guest
+from run_maestro import run_guest, start_guest, APP
 
 
 class MaestroRecoveryTests(TestCase):
@@ -14,6 +14,10 @@ class MaestroRecoveryTests(TestCase):
             if command[0] == "maestro":
                 status, text = outcomes.pop(0)
                 return CompletedProcess(command, status, text, "")
+            if "clear" in command:
+                return CompletedProcess(command, 0, "Success", "")
+            if "start" in command:
+                return CompletedProcess(command, 0, "Status: ok", "")
             return CompletedProcess(command, 0, "1", "")
 
         with patch.object(Path, "glob", return_value=[]):
@@ -24,6 +28,18 @@ class MaestroRecoveryTests(TestCase):
         code, commands = self.execute([(0, "passed")])
         self.assertEqual(code, 0)
         self.assertEqual(sum(c[0] == "maestro" for c in commands), 1)
+        clear = ["adb", "-s", "emulator-5554", "shell", "pm", "clear", APP]
+        self.assertLess(commands.index(clear), next(i for i,c in enumerate(commands) if c[0] == "maestro"))
+
+    def test_clear_failure_blocks_flow(self):
+        def run(command, **_):
+            return CompletedProcess(command, 0, "Failed" if "clear" in command else "", "")
+        self.assertFalse(start_guest(run, lambda _: None))
+
+    def test_android_start_error_blocks_flow_even_with_zero_exit(self):
+        def run(command, **_):
+            return CompletedProcess(command, 0, "Success" if "clear" in command else "Error: Activity not found", "")
+        self.assertFalse(start_guest(run, lambda _: None))
 
     def test_assertion_failure_is_not_retried(self):
         code, commands = self.execute([(1, "Assertion failed: button not found")])

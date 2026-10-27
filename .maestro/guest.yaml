@@ -1,8 +1,8 @@
 appId: com.panamericana.panamericana_flutter
 name: Invitado y validación del formulario
 ---
-- launchApp:
-    clearState: true
+# run_maestro.py clears and launches the app through SDK adb before this flow.
+# Avoid Maestro's launchApp transport failure; keep every UI assertion below.
 - extendedWaitUntil:
     visible: "Panamericana"
     timeout: 60000

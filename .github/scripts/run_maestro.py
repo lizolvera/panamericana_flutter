@@ -4,6 +4,28 @@ import subprocess
 import sys
 import time
 
+DEVICE = "emulator-5554"
+APP = "com.panamericana.panamericana_flutter"
+
+
+def start_guest(run, output):
+    """Use SDK adb for a clean guest launch before Maestro opens its transport."""
+    for args, expected in [
+        (["shell", "am", "force-stop", APP], None),
+        (["shell", "pm", "clear", APP], "Success"),
+        (["shell", "am", "start", "-W", "-n", APP + "/.MainActivity"], "Status: ok"),
+    ]:
+        try:
+            result = run(["adb", "-s", DEVICE, *args],
+                         capture_output=True, text=True, timeout=60)
+        except subprocess.TimeoutExpired:
+            output("El arranque limpio de Android agotó el tiempo de espera.")
+            return False
+        if result.returncode or (expected and expected not in result.stdout):
+            output("No se pudo preparar la app invitada: " + result.stdout + result.stderr)
+            return False
+    return True
+
 
 def wait_for_device(run=subprocess.run, sleep=time.sleep):
     stable = 0
@@ -21,12 +43,16 @@ def wait_for_device(run=subprocess.run, sleep=time.sleep):
 
 
 def run_guest(maestro, run=subprocess.run, sleep=time.sleep, output=print):
-    command = [maestro, "test", "--format", "junit", "--output",
+    command = [maestro, "--device", DEVICE, "test", "--format", "junit", "--output",
                "reports/maestro/results.xml", ".maestro/guest.yaml"]
     for attempt in range(2):
         if not wait_for_device(run, sleep):
             output("El emulador no permanece disponible; la validación falla.")
             return 1
+        if not start_guest(run, output):
+            return 1
+        debug = Path.home() / ".maestro/tests"
+        previous = {path: path.stat().st_mtime_ns for path in debug.glob("*/**/commands.json")}
         result = run(command, capture_output=True, text=True)
         text = result.stdout + result.stderr
         output(text)
@@ -35,8 +61,9 @@ def run_guest(maestro, run=subprocess.run, sleep=time.sleep, output=print):
         # Maestro CLI often only prints 'Flow Failed'; its debug commands file
         # contains the actual transport failure. Inspect only this guest run.
         offline = "device offline" in text.lower()
-        debug = Path.home() / ".maestro/tests"
-        files = sorted(debug.glob("*/**/commands.json"), key=lambda path: path.stat().st_mtime)
+        files = sorted((path for path in debug.glob("*/**/commands.json")
+                        if previous.get(path) != path.stat().st_mtime_ns),
+                       key=lambda path: path.stat().st_mtime_ns)
         if files:
             offline = offline or "device offline" in files[-1].read_text(encoding="utf-8").lower()
         if not offline or attempt == 1:
