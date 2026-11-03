@@ -4,6 +4,18 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Los secretos se reciben del entorno; nunca se escriben en el repositorio.
+val uploadStorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+val requireUploadSigning = System.getenv("REQUIRE_UPLOAD_SIGNING") == "true"
+val uploadKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
+val uploadKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+val uploadStorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+val hasUploadSigning = listOf(uploadStorePath, uploadKeyAlias, uploadKeyPassword,
+    uploadStorePassword).all { !it.isNullOrBlank() }
+check(!requireUploadSigning || hasUploadSigning) {
+    "Faltan credenciales de firma Android de publicación."
+}
+
 android {
     namespace = "com.panamericana.panamericana_flutter"
     compileSdk = flutter.compileSdkVersion
@@ -29,11 +41,21 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (hasUploadSigning) {
+            create("upload") {
+                storeFile = file(uploadStorePath!!)
+                storePassword = uploadStorePassword
+                keyAlias = uploadKeyAlias
+                keyPassword = uploadKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // CI de staging conserva debug; producción exige la clave de carga.
+            signingConfig = signingConfigs.getByName(if (hasUploadSigning) "upload" else "debug")
             isMinifyEnabled = true
             isShrinkResources = true
 
