@@ -34,6 +34,32 @@ jobs:
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
     steps:
+      - name: Definir código de versión y credencial temporal
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Cada intento produce un código nuevo, incluso al reintentar una subida.
+          test "$GITHUB_RUN_ATTEMPT" -lt 1000
+          echo "BUILD_NUMBER=$((GITHUB_RUN_NUMBER * 1000 + GITHUB_RUN_ATTEMPT))" >> "$GITHUB_ENV"
+          echo "PLAY_CREDENTIALS_PATH=$RUNNER_TEMP/google-play-service-account.json" >> "$GITHUB_ENV"
+      - name: Validar credencial de Google Play
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        shell: bash
+        run: |
+          python3 - <<'PYTHON'
+          import json, os, pathlib
+          raw = os.environ.get('PLAY_SERVICE_ACCOUNT_JSON', '')
+          try:
+              data = json.loads(raw)
+              assert data.get('type') == 'service_account'
+              assert all(data.get(key) for key in ('client_email', 'private_key', 'token_uri'))
+          except (ValueError, AssertionError, AttributeError):
+              raise SystemExit('::error::Configura GOOGLE_PLAY_SERVICE_ACCOUNT_JSON con el JSON completo de la cuenta de servicio.') from None
+          path = pathlib.Path(os.environ['PLAY_CREDENTIALS_PATH'])
+          path.touch(mode=0o600)
+          path.write_text(raw)
+          PYTHON
       - name: Definir ruta temporal de firma
         run: echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/panamericana-upload.jks" >> "$GITHUB_ENV"
       - name: Comprobar validación del mismo commit de master
@@ -79,7 +105,7 @@ jobs:
         run: >-
           flutter build appbundle --release --obfuscate
           --split-debug-info=build/symbols
-          --build-number=${{ github.run_number }}
+          --build-number="$BUILD_NUMBER"
           --dart-define="API_BASE_URL=$API_BASE_URL"
       - name: Verificar firma y símbolos
         shell: bash
@@ -98,7 +124,7 @@ jobs:
           jarsigner -verify "$bundle"
           mkdir -p build/publicacion
           printf 'commit=%s\nversionCode=%s\napi=%s\n' \
-            "$SOURCE_SHA" "$GITHUB_RUN_NUMBER" "$API_BASE_URL" > build/publicacion/compilacion.txt
+            "$SOURCE_SHA" "$BUILD_NUMBER" "$API_BASE_URL" > build/publicacion/compilacion.txt
       - name: Guardar AAB y símbolos de publicación
         uses: actions/upload-artifact@v4
         with:
@@ -110,7 +136,18 @@ jobs:
             build/publicacion/compilacion.txt
           if-no-files-found: error
           retention-days: 30
-      - name: Eliminar clave temporal
+      - name: Publicar versión en prueba interna de Google Play
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJson: ${{ env.PLAY_CREDENTIALS_PATH }}
+          packageName: com.panamericana.panamericana_flutter
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          tracks: internal
+          status: completed
+          releaseName: Panamericana Clientes ${{ env.BUILD_NUMBER }}
+          mappingFile: build/app/outputs/mapping/release/mapping.txt
+          whatsNewDirectory: distribution/whatsnew
+      - name: Eliminar claves temporales
         if: always()
         shell: bash
-        run: rm -f -- "$RUNNER_TEMP/panamericana-upload.jks" "$RUNNER_TEMP/upload.der" "$RUNNER_TEMP/bundle.pem" "$RUNNER_TEMP/bundle.der"
+        run: rm -f -- "$RUNNER_TEMP/panamericana-upload.jks" "$RUNNER_TEMP/upload.der" "$RUNNER_TEMP/bundle.pem" "$RUNNER_TEMP/bundle.der" "$RUNNER_TEMP/google-play-service-account.json"
