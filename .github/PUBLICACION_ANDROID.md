@@ -9,7 +9,8 @@ Integrar feature/disparador → develop → release → master por los PR habitu
 Git no permite tener develop y develop/disparador a la vez; usar feature/disparador.
 El workflow publicar-android.yml espera una ejecución exitosa del workflow
 Seguridad Flutter (SAST y DAST) por push a master. Compila exactamente ese commit.
-No fusiona ramas ni sube archivos a Play Console. Conserva el AAB de staging existente.
+Publica automáticamente el AAB firmado en la pista internal (prueba interna) de Play Console.
+No fusiona ramas. Conserva el AAB de staging existente y el respaldo de publicación.
 
 También permite Actions → Preparar AAB para Google Play → Run workflow → master.
 El botón aparece cuando el archivo llega a la rama predeterminada; la ejecución
@@ -51,20 +52,38 @@ La compilación de producción falla si faltan secretos; Gradle exige la firma d
 carga cuando REQUIRE_UPLOAD_SIGNING=true. Sin esas variables, staging conserva
 su firma debug. No configurar secretos de publicación en el workflow de PR.
 
-## Descarga y primera prueba
+## Credencial de publicación automática
+
+Configurar el secreto GOOGLE_PLAY_SERVICE_ACCOUNT_JSON con el JSON completo de
+la cuenta de servicio. Habilitar androidpublisher.googleapis.com en su proyecto.
+En Play Console, dar a esa cuenta acceso solo a Panamericana Clientes con lectura
+de información de la app y lanzamiento a segmentos de pruebas. No requiere rol
+IAM de editor/administrador ni permisos de producción o financieros.
+La primera versión ya debe existir en Play Console (se subió manualmente).
+La credencial se valida antes de compilar y se elimina del runner al terminar.
+Nunca se incluye en artefactos. Una subida fallida deja el workflow en rojo, pero
+el AAB y símbolos ya se habrán guardado para diagnóstico.
+
+## Publicación y respaldo
 
 Tras completar el workflow, descargar el artefacto google-play-… desde Actions.
-Subir app-release.aab a la pista de pruebas internas de Google Play y completar
-Play App Signing. Guardar permanentemente los símbolos Dart, mapping.txt de R8
+La subida y lanzamiento en prueba interna son automáticos; revisar el resultado
+del paso de publicación y la nueva versión en Play Console. No descargar ni subir
+el AAB manualmente en el flujo normal. Play puede aplicar procesamiento/revisión. Guardar permanentemente los símbolos Dart, mapping.txt de R8
 y compilacion.txt de cada versión distribuida (el artefacto expira en 30 días).
 Verificar catálogo, sesión, pedidos y acceso con Google en una instalación desde
 Play. Si se utiliza Google Sign-In, revisar la configuración OAuth Android para
 el paquete y el certificado de firma que Google usa para distribuir la app.
 
-El versionCode usa github.run_number de este workflow. Cada ejecución nueva lo
-incrementa; reintentar una ejecución conserva el mismo código. No subir dos AAB
-con el mismo código. Si ya existe una entrega con un código igual o mayor, ajustar
-la estrategia de versionado antes de subir. versionName permanece en pubspec.yaml.
+El versionCode usa github.run_number * 1000 + github.run_attempt (primer intento
+de la ejecución 2: 2001), superior a la primera versión manual con código 1.
+Cada intento recibe un código nuevo. No reiniciar la numeración del workflow ni
+subir manualmente códigos superiores sin actualizar esta estrategia. versionName
+permanece en pubspec.yaml; aumentarlo cuando cambie la versión comercial.
+Las notas de versión están en distribution/whatsnew/whatsnew-es-419.
+El destino está fijado a internal: no publica en producción ni en prueba cerrada.
+Un reintento de una ejecución exitosa puede publicar otra versión del mismo código
+fuente; utilizar reintentos solo para recuperar fallos.
 
 Referencias:
 - https://docs.flutter.dev/deployment/android
