@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:dio/dio.dart';
@@ -48,7 +49,10 @@ void main() {
 
     await app.main();
     await tester.pump(const Duration(seconds: 2));
-    await tester.tap(find.text('Perfil').last);
+    await tester.tap(find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.text('Perfil'),
+    ));
     for (
       var i = 0;
       i < 60 && find.text('MIS DIRECCIONES').evaluate().isEmpty;
@@ -58,6 +62,8 @@ void main() {
     }
     expect(find.text('MIS DIRECCIONES'), findsOneWidget);
     expect(find.text('MIS COMPRAS'), findsOneWidget);
+    await tester.ensureVisible(find.text('MIS COMPRAS'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('MIS COMPRAS'));
     for (
       var i = 0;
