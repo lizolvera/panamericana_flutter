@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:dio/dio.dart';
@@ -48,11 +47,13 @@ void main() {
     expect(orders, isNotEmpty, reason: 'Sembrar historial del cliente A');
 
     await app.main();
+    // Esperar a que restoreSession() complete y la app pinte el catálogo.
+    for (var i = 0; i < 40 && find.text('Productos Destacados').evaluate().isEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 500));
+    }
     await tester.pump(const Duration(seconds: 2));
-    await tester.tap(find.descendant(
-      of: find.byType(NavigationBar),
-      matching: find.text('Perfil'),
-    ));
+    // Solo hay un "Perfil" visible (el de la NavigationBar) porque el catálogo no lo tiene.
+    await tester.tap(find.text('Perfil'));
     for (
       var i = 0;
       i < 60 && find.text('MIS DIRECCIONES').evaluate().isEmpty;

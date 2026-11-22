@@ -342,12 +342,15 @@ class _InfoPersonalCard extends StatelessWidget {
                 ),
               ),
               AppTheme.widthSpacer12,
-              Text(
-                'Datos Personales',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.cafeOscuro,
-                  letterSpacing: -0.3,
+              Expanded(
+                child: Text(
+                  'Datos Personales',
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.cafeOscuro,
+                    letterSpacing: -0.3,
+                  ),
                 ),
               ),
             ],
