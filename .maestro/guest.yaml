@@ -12,7 +12,8 @@ name: Invitado y validación del formulario
     visible: "Iniciar sesión"
     timeout: 20000
 - scrollUntilVisible:
-    visible: "Continuar"
+    element:
+      visible: "Continuar"
     timeout: 20000
     center: true
 - tapOn: "Continuar"
@@ -23,7 +24,8 @@ name: Invitado y validación del formulario
 - inputText: "correo-invalido"
 - hideKeyboard
 - scrollUntilVisible:
-    visible: "Continuar"
+    element:
+      visible: "Continuar"
     timeout: 20000
     center: true
 - tapOn: "Continuar"
