@@ -9,8 +9,12 @@ name: Invitado y validación del formulario
 - assertVisible: "(?s).*Carrito.*"
 - tapOn: "(?s).*Perfil.*"
 - extendedWaitUntil:
+    visible: "Iniciar sesión"
+    timeout: 20000
+- scrollUntilVisible:
     visible: "Continuar"
-    timeout: 15000
+    timeout: 20000
+    center: true
 - tapOn: "Continuar"
 - assertVisible: "El correo es obligatorio"
 - assertVisible: "Ingresa tu contraseña"
@@ -18,6 +22,10 @@ name: Invitado y validación del formulario
     id: "login_email"
 - inputText: "correo-invalido"
 - hideKeyboard
+- scrollUntilVisible:
+    visible: "Continuar"
+    timeout: 20000
+    center: true
 - tapOn: "Continuar"
 - assertVisible: "Ingresa un correo válido"
 - takeScreenshot: "reports/maestro/login-validacion"
