@@ -47,8 +47,8 @@ void main() {
     expect(orders, isNotEmpty, reason: 'Sembrar historial del cliente A');
 
     await app.main();
-    // Esperar a que restoreSession() complete y la app pinte el catálogo.
-    for (var i = 0; i < 40 && find.text('Productos Destacados').evaluate().isEmpty; i++) {
+    // Esperar a que la app pinte el catálogo (texto siempre presente en tab 0).
+    for (var i = 0; i < 40 && find.text('Todos los productos').evaluate().isEmpty; i++) {
       await tester.pump(const Duration(milliseconds: 500));
     }
     await tester.pump(const Duration(seconds: 2));
@@ -61,8 +61,10 @@ void main() {
     ) {
       await tester.pump(const Duration(milliseconds: 500));
     }
-    expect(find.text('MIS DIRECCIONES'), findsOneWidget);
-    expect(find.text('MIS COMPRAS'), findsOneWidget);
+    expect(find.text('MIS DIRECCIONES'), findsOneWidget,
+        reason: 'No se encontro MIS DIRECCIONES en el perfil');
+    expect(find.text('MIS COMPRAS'), findsOneWidget,
+        reason: 'No se encontro MIS COMPRAS en el perfil');
     await tester.ensureVisible(find.text('MIS COMPRAS'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('MIS COMPRAS'));
@@ -73,8 +75,10 @@ void main() {
     ) {
       await tester.pump(const Duration(milliseconds: 500));
     }
-    expect(find.textContaining('Pedido '), findsWidgets);
-    expect(tester.takeException(), isNull);
+    expect(find.textContaining('Pedido '), findsWidgets,
+        reason: 'No se encontraron pedidos en MIS COMPRAS');
+    expect(tester.takeException(), isNull,
+        reason: 'Hubo una excepcion durante el test');
     await SessionStorage.instance.clear();
   });
 }
