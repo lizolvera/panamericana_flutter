@@ -364,18 +364,20 @@ class _CarritoView extends StatelessWidget {
                           size: 22,
                         ),
                         AppTheme.spacer8,
-                        Text(
-                          'Carrito de compras',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.cafeOscuro,
-                                letterSpacing: -0.5,
-                              ),
+                        Expanded(
+                          child: Text(
+                            'Carrito de compras',
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.cafeOscuro,
+                                  letterSpacing: -0.5,
+                                ),
+                          ),
                         ),
-                        const Spacer(),
                         Text(
                           '${cart.totalArticulos} art.',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
