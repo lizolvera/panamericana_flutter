@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../../../../data/repositories/auth_repository.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
+import '../../../shared/widgets/widgets.dart';
 import '../../auth/view_models/auth_view_model.dart';
 import '../../cart/view_models/cart_view_model.dart';
 import '../../shell/tab_index_notifier.dart';
@@ -51,7 +53,9 @@ class _ProfileMenu extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 600),
           child: ListView(
-            padding: const EdgeInsets.only(bottom: 24),
+            // El body se extiende bajo el NavigationBar (extendBody: true):
+            // dejamos espacio inferior para que el botón no quede tapado.
+            padding: const EdgeInsets.only(bottom: 96),
             children: [
               // ── Sección "MI CUENTA" ──────────────────────────────────────
               _SeccionLabel('MI CUENTA'),
@@ -124,10 +128,7 @@ class _ProfileMenu extends StatelessWidget {
               const SizedBox(height: 28),
 
               // ── Botón Cerrar sesión ──────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _BotonCerrarSesion(),
-              ),
+              _BotonCerrarSesion(),
             ],
           ),
         ),
@@ -148,12 +149,11 @@ class _SeccionLabel extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
       child: Text(
         texto,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 2.0,
-          color: AppColors.terracota,
-        ),
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              letterSpacing: 2.0,
+              color: AppColors.terracota.withValues(alpha: 0.8),
+            ),
       ),
     );
   }
@@ -167,21 +167,12 @@ class _PerfilCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppOutlineCard(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.blancoCalido,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.rosaBeigeClaro),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.cafeOscuro.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: AppTheme.padding16,
+      borderRadius: AppTheme.radius14,
+      elevation: 4,
+      shadowColor: AppTheme.cardShadow.color,
       child: Row(
         children: [
           // Avatar
@@ -193,9 +184,9 @@ class _PerfilCard extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.vino.withValues(alpha: 0.15),
-                  blurRadius: 8,
-                  spreadRadius: 1,
+                  color: AppColors.vinoOscuro.withValues(alpha: 0.08),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
@@ -205,38 +196,38 @@ class _PerfilCard extends StatelessWidget {
               color: AppColors.vino,
             ),
           ),
-          const SizedBox(width: 14),
+          AppTheme.widthSpacer14,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Título "Perfil"
-                const Text(
+                Text(
                   'Perfil',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: AppColors.cafeOscuro,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.cafeOscuro,
+                        letterSpacing: -0.5,
+                      ),
                 ),
-                const SizedBox(height: 4),
+                AppTheme.spacer4,
                 // Nombre del usuario
                 Text(
                   auth.nombre ?? 'Cliente',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.vino,
-                  ),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.vino,
+                        letterSpacing: 0.2,
+                      ),
                 ),
-                const SizedBox(height: 2),
+                AppTheme.spacer2,
                 Text(
                   'Administra tus datos personales, direcciones y seguridad.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.cafeOscuro.withValues(alpha: 0.55),
-                    height: 1.4,
-                  ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.cafeOscuro.withValues(alpha: 0.55),
+                        height: 1.4,
+                        letterSpacing: 0.2,
+                      ),
                 ),
               ],
             ),
@@ -262,25 +253,22 @@ class _OpcionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.blancoCalido,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppTheme.radius14,
         border: Border.all(color: AppColors.rosaBeigeClaro),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.cafeOscuro.withValues(alpha: 0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 1),
-          ),
-        ],
+        boxShadow: [AppTheme.shadowBoutique],
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppTheme.radius14,
+        splashColor: AppColors.rosaPalo.withValues(alpha: 0.12),
+        highlightColor: AppColors.terracota.withValues(alpha: 0.08),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Row(
             children: [
               Container(
@@ -288,23 +276,22 @@ class _OpcionTile extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   color: AppColors.rosaBeigeClaro.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(9),
+                  borderRadius: AppTheme.radius10,
                 ),
                 child: Icon(icon, size: 20, color: AppColors.vino),
               ),
-              const SizedBox(width: 14),
+              AppTheme.widthSpacer16,
               Expanded(
                 child: Text(
                   titulo,
-                  style: const TextStyle(
+                  style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.2,
                     color: AppColors.cafeOscuro,
                   ),
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right,
                 size: 20,
                 color: AppColors.terracota,
@@ -326,20 +313,15 @@ class _InfoPersonalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.blancoCalido,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: AppTheme.radius14,
         border: Border.all(color: AppColors.rosaBeigeClaro),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.cafeOscuro.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: [AppTheme.shadowBoutique],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,7 +333,7 @@ class _InfoPersonalCard extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   color: AppColors.vino,
-                  borderRadius: BorderRadius.circular(9),
+                  borderRadius: AppTheme.radius10,
                 ),
                 child: const Icon(
                   Icons.badge_outlined,
@@ -359,21 +341,21 @@ class _InfoPersonalCard extends StatelessWidget {
                   color: AppColors.blancoCalido,
                 ),
               ),
-              const SizedBox(width: 12),
-              const Text(
+              AppTheme.widthSpacer12,
+              Text(
                 'Datos Personales',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
                   color: AppColors.cafeOscuro,
+                  letterSpacing: -0.3,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          AppTheme.spacer8,
           Text(
             'Actualiza los datos principales de tu cuenta.',
-            style: TextStyle(
+            style: theme.textTheme.bodySmall?.copyWith(
               fontSize: 13,
               color: AppColors.cafeOscuro.withValues(alpha: 0.55),
               height: 1.4,
@@ -389,7 +371,7 @@ class _InfoPersonalCard extends StatelessWidget {
             ),
           ],
           if (auth.nombre != null) ...[
-            const SizedBox(height: 8),
+            AppTheme.spacer8,
             _DatoRow(
               icon: Icons.person_outline,
               label: 'Nombre',
@@ -414,24 +396,27 @@ class _DatoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       children: [
         Icon(icon, size: 16, color: AppColors.terracota),
-        const SizedBox(width: 8),
+        AppTheme.widthSpacer8,
         Text(
           '$label: ',
-          style: TextStyle(
+          style: theme.textTheme.bodySmall?.copyWith(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: AppColors.cafeOscuro.withValues(alpha: 0.5),
+            letterSpacing: 0.2,
           ),
         ),
         Expanded(
           child: Text(
             valor,
-            style: const TextStyle(
+            style: theme.textTheme.bodySmall?.copyWith(
               fontSize: 12,
               color: AppColors.cafeOscuro,
+              letterSpacing: 0.2,
             ),
             overflow: TextOverflow.ellipsis,
           ),
@@ -446,12 +431,13 @@ class _DatoRow extends StatelessWidget {
 class _BotonCerrarSesion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.vino.withValues(alpha: 0.4),
-        ),
+        color: AppColors.vino.withValues(alpha: 0.06),
+        borderRadius: AppTheme.radius14,
+        border: Border.all(color: AppColors.vino.withValues(alpha: 0.35)),
       ),
       child: InkWell(
         onTap: () async {
@@ -459,47 +445,78 @@ class _BotonCerrarSesion extends StatelessWidget {
             context: context,
             builder: (ctx) => AlertDialog(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: AppTheme.radius20,
               ),
               backgroundColor: AppColors.blancoCalido,
-              title: const Row(
+              titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
+              contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
+              actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              actionsAlignment: MainAxisAlignment.end,
+              title: Row(
                 children: [
-                  Icon(Icons.logout, color: AppColors.vino, size: 22),
-                  SizedBox(width: 8),
-                  Text(
-                    'Cerrar sesión',
-                    style: TextStyle(
-                      color: AppColors.cafeOscuro,
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.vino,
+                      borderRadius: AppTheme.radius12,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.vinoOscuro.withValues(alpha: 0.18),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.logout,
+                      color: AppColors.blancoCalido,
+                      size: 20,
+                    ),
+                  ),
+                  AppTheme.widthSpacer12,
+                  Expanded(
+                    child: Text(
+                      'Cerrar sesión',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: AppColors.cafeOscuro,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                      ),
                     ),
                   ),
                 ],
               ),
               content: Text(
                 '¿Estás seguro de que deseas salir de tu cuenta?',
-                style: TextStyle(
+                style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.cafeOscuro.withValues(alpha: 0.7),
+                  letterSpacing: 0.2,
+                  height: 1.4,
                 ),
               ),
               actions: [
-                TextButton(
+                AppTextButton(
                   onPressed: () => Navigator.of(ctx).pop(false),
-                  child: Text(
-                    'Cancelar',
-                    style: TextStyle(
-                      color: AppColors.cafeOscuro.withValues(alpha: 0.5),
-                    ),
-                  ),
+                  text: 'Cancelar',
+                  color: AppColors.cafeOscuro.withValues(alpha: 0.55),
                 ),
                 FilledButton(
+                  onPressed: () => Navigator.of(ctx).pop(true),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.vino,
                     foregroundColor: AppColors.blancoCalido,
+                    minimumSize: const Size(0, 46),
+                    padding: const EdgeInsets.symmetric(horizontal: 22),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: AppTheme.radius12,
                     ),
+                    textStyle: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          letterSpacing: 0.2,
+                        ),
                   ),
-                  onPressed: () => Navigator.of(ctx).pop(true),
                   child: const Text('Cerrar sesión'),
                 ),
               ],
@@ -527,15 +544,16 @@ class _BotonCerrarSesion extends StatelessWidget {
               backgroundColor: AppColors.vino,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: AppTheme.radius10,
               ),
-              duration: const Duration(seconds: 2),
             ),
           );
         },
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppTheme.radius14,
+        splashColor: AppColors.vino.withValues(alpha: 0.12),
+        highlightColor: AppColors.vino.withValues(alpha: 0.08),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -544,13 +562,13 @@ class _BotonCerrarSesion extends StatelessWidget {
                 size: 20,
                 color: AppColors.vino,
               ),
-              const SizedBox(width: 10),
-              const Text(
+              AppTheme.widthSpacer10,
+              Text(
                 'Cerrar sesión',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
                   color: AppColors.vino,
+                  letterSpacing: 0.2,
                 ),
               ),
             ],

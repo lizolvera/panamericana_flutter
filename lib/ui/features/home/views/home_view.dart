@@ -10,6 +10,8 @@ import '../../profile/views/profile_view.dart';
 import '../../shell/shell_scaffold.dart';
 import '../../shell/tab_index_notifier.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
+import '../../../shared/widgets/widgets.dart';
 
 /// **View principal**: usa la shell persistente (header + footer) y cambia
 /// el contenido según la pestaña activa.
@@ -32,7 +34,10 @@ class HomeView extends StatelessWidget {
         cuerpo = auth.isCliente ? const ProfileView() : const _LoginPrompt();
     }
 
-    return ShellScaffold(body: cuerpo);
+    return ShellScaffold(
+      isDetail: false,
+      body: cuerpo,
+    );
   }
 }
 
@@ -51,7 +56,7 @@ class _LoginPrompt extends StatelessWidget {
       color: AppColors.fondoGeneral,
       child: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(28),
+          padding: AppTheme.padding28,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
             child: Column(
@@ -66,9 +71,9 @@ class _LoginPrompt extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.vino.withValues(alpha: 0.15),
-                        blurRadius: 20,
-                        spreadRadius: 2,
+                        color: AppColors.vinoOscuro.withValues(alpha: 0.08),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
@@ -78,51 +83,40 @@ class _LoginPrompt extends StatelessWidget {
                     color: AppColors.vino,
                   ),
                 ),
-                const SizedBox(height: 24),
+                AppTheme.spacer24,
                 // Sección "MI CUENTA"
                 Text(
                   'MI CUENTA',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 2.0,
-                    color: AppColors.terracota.withValues(alpha: 0.8),
-                  ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 2.0,
+                        color: AppColors.terracota.withValues(alpha: 0.8),
+                      ),
                 ),
-                const SizedBox(height: 12),
+                AppTheme.spacer12,
                 Text(
                   'Tu Perfil de Cliente',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppColors.cafeOscuro,
+                        letterSpacing: -0.5,
                       ),
                 ),
-                const SizedBox(height: 8),
+                AppTheme.spacer8,
                 Text(
                   'Inicia sesión para consultar tus datos personales, administrar tus direcciones y pedidos.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.cafeOscuro.withValues(alpha: 0.6),
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                // Tarjeta de perfil decorativa
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.blancoCalido,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.rosaBeigeClaro),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.cafeOscuro.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.cafeOscuro.withValues(alpha: 0.6),
+                        height: 1.5,
+                        letterSpacing: 0.2,
                       ),
-                    ],
-                  ),
+                ),
+                AppTheme.spacer28,
+                // Tarjeta de perfil decorativa
+                AppOutlineCard(
+                  padding: AppTheme.padding16,
                   child: Row(
                     children: [
                       Container(
@@ -138,24 +132,26 @@ class _LoginPrompt extends StatelessWidget {
                           size: 24,
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      AppTheme.spacer14,
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Perfil',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.cafeOscuro,
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.cafeOscuro,
+                                    letterSpacing: 0.2,
+                                  ),
                             ),
+                            AppTheme.spacer4,
                             Text(
                               'Administra tus datos personales, direcciones y seguridad.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.cafeOscuro.withValues(alpha: 0.6),
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: AppColors.cafeOscuro.withValues(alpha: 0.6),
+                                    letterSpacing: 0.2,
+                                  ),
                             ),
                           ],
                         ),
@@ -163,38 +159,23 @@ class _LoginPrompt extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 28),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(50),
-                      backgroundColor: AppColors.vino,
-                      foregroundColor: AppColors.blancoCalido,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () =>
-                        Navigator.of(context).pushNamed('/login').then((_) {
-                      if (context.mounted &&
-                          context.read<AuthViewModel>().isCliente) {
-                        tab.indice = 2;
-                      }
-                    }),
-                    icon: const Icon(Icons.login),
-                    label: const Text('Iniciar sesión'),
-                  ),
+                AppTheme.spacer28,
+                AppPrimaryButton.icon(
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/login').then((_) {
+                    if (context.mounted &&
+                        context.read<AuthViewModel>().isCliente) {
+                      tab.indice = 2;
+                    }
+                  }),
+                  icon: const Icon(Icons.login),
+                  text: 'Iniciar sesión',
                 ),
-                const SizedBox(height: 10),
-                TextButton.icon(
+                AppTheme.spacer10,
+                AppSecondaryButton.icon(
                   onPressed: () => tab.indice = 0,
-                  icon: const Icon(Icons.storefront_outlined,
-                      color: AppColors.terracota),
-                  label: const Text(
-                    'Continuar explorando productos',
-                    style: TextStyle(color: AppColors.terracota),
-                  ),
+                  icon: const Icon(Icons.storefront_outlined),
+                  text: 'Continuar explorando productos',
                 ),
               ],
             ),
@@ -225,7 +206,7 @@ class _CarritoView extends StatelessWidget {
         color: AppColors.fondoGeneral,
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(28),
+            padding: AppTheme.padding28,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
               child: Column(
@@ -239,9 +220,9 @@ class _CarritoView extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.vino.withValues(alpha: 0.15),
-                          blurRadius: 20,
-                          spreadRadius: 2,
+                          color: AppColors.vinoOscuro.withValues(alpha: 0.08),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
                         ),
                       ],
                     ),
@@ -251,64 +232,46 @@ class _CarritoView extends StatelessWidget {
                       color: AppColors.vino,
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  AppTheme.spacer24,
                   Text(
                     'CARRITO DE COMPRAS',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 2.0,
-                      color: AppColors.terracota.withValues(alpha: 0.8),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Tu carrito te espera',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.cafeOscuro,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 2.0,
+                          color: AppColors.terracota.withValues(alpha: 0.8),
                         ),
                   ),
-                  const SizedBox(height: 8),
+                  AppTheme.spacer10,
+                  Text(
+                    'Tu carrito te espera',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.cafeOscuro,
+                          letterSpacing: -0.5,
+                        ),
+                  ),
+                  AppTheme.spacer8,
                   Text(
                     'Inicia sesión para agregar productos, consultar tu total y realizar pedidos.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: AppColors.cafeOscuro.withValues(alpha: 0.6),
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50),
-                        backgroundColor: AppColors.vino,
-                        foregroundColor: AppColors.blancoCalido,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.cafeOscuro.withValues(alpha: 0.6),
+                          height: 1.5,
+                          letterSpacing: 0.2,
                         ),
-                      ),
-                      onPressed: () =>
-                          Navigator.of(context).pushNamed('/login'),
-                      icon: const Icon(Icons.login),
-                      label: const Text('Iniciar sesión'),
-                    ),
                   ),
-                  const SizedBox(height: 10),
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(46),
-                      foregroundColor: AppColors.vino,
-                      side: const BorderSide(color: AppColors.vino),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+                  AppTheme.spacer28,
+                  AppPrimaryButton.icon(
+                    onPressed: () =>
+                        Navigator.of(context).pushNamed('/login'),
+                    icon: const Icon(Icons.login),
+                    text: 'Iniciar sesión',
+                  ),
+                  AppTheme.spacer10,
+                  AppSecondaryButton.icon(
                     onPressed: () => tab.indice = 0,
                     icon: const Icon(Icons.storefront_outlined),
-                    label: const Text('Explorar catálogo'),
+                    text: 'Explorar catálogo',
                   ),
                 ],
               ),
@@ -324,7 +287,7 @@ class _CarritoView extends StatelessWidget {
         color: AppColors.fondoGeneral,
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(28),
+            padding: AppTheme.padding28,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -334,6 +297,13 @@ class _CarritoView extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.rosaBeigeClaro,
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.vinoOscuro.withValues(alpha: 0.08),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
                   child: const Icon(
                     Icons.remove_shopping_cart_outlined,
@@ -341,32 +311,29 @@ class _CarritoView extends StatelessWidget {
                     color: AppColors.terracota,
                   ),
                 ),
-                const SizedBox(height: 20),
-                const Text(
+                AppTheme.spacer20,
+                Text(
                   'Tu carrito está vacío',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.cafeOscuro,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.cafeOscuro,
+                        letterSpacing: -0.5,
+                      ),
                 ),
-                const SizedBox(height: 8),
+                AppTheme.spacer8,
                 Text(
                   'Descubre productos y aprovecha nuestras ofertas activas.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.cafeOscuro.withValues(alpha: 0.6),
-                  ),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.cafeOscuro.withValues(alpha: 0.6),
+                        letterSpacing: 0.2,
+                      ),
                 ),
-                const SizedBox(height: 24),
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.vino,
-                    foregroundColor: AppColors.blancoCalido,
-                  ),
+                AppTheme.spacer24,
+                AppPrimaryButton.icon(
                   onPressed: () => tab.indice = 0,
                   icon: const Icon(Icons.storefront_outlined),
-                  label: const Text('Explorar productos'),
+                  text: 'Explorar productos',
                 ),
               ],
             ),
@@ -396,7 +363,7 @@ class _CarritoView extends StatelessWidget {
                           color: AppColors.vino,
                           size: 22,
                         ),
-                        const SizedBox(width: 8),
+                        AppTheme.spacer8,
                         Text(
                           'Carrito de compras',
                           style: Theme.of(context)
@@ -405,31 +372,27 @@ class _CarritoView extends StatelessWidget {
                               ?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.cafeOscuro,
+                                letterSpacing: -0.5,
                               ),
                         ),
                         const Spacer(),
                         Text(
                           '${cart.totalArticulos} art.',
-                          style: const TextStyle(
-                            color: AppColors.terracota,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: AppColors.terracota,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.2,
+                              ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  AppTheme.spacer10,
                   // Encabezado de tabla
-                  Container(
+                  AppOutlineCard(
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: AppColors.blancoCalido,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.rosaBeigeClaro),
-                    ),
                     child: Row(
                       children: [
                         const SizedBox(width: 68),
@@ -437,34 +400,31 @@ class _CarritoView extends StatelessWidget {
                           flex: 3,
                           child: Text(
                             'ARTÍCULO / DESCRIPCIÓN',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                              color:
-                                  AppColors.cafeOscuro.withValues(alpha: 0.5),
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.8,
+                                  color: AppColors.cafeOscuro.withValues(alpha: 0.5),
+                                ),
                           ),
                         ),
                         Text(
                           'PRECIO',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                            color: AppColors.cafeOscuro.withValues(alpha: 0.5),
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: AppColors.cafeOscuro.withValues(alpha: 0.5),
+                              ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  AppTheme.spacer8,
                   // Lista de productos
                   ...cart.items.map((item) => _CartItemTile(item: item)),
-                  const SizedBox(height: 6),
+                  AppTheme.spacer6,
                   // Resumen del pedido (Boceto 2: subtotal, envío, impuestos, total)
                   _ResumenPedido(cart: cart),
-                  const SizedBox(height: 24),
+                  AppTheme.spacer24,
                 ],
               ),
             ),
@@ -474,29 +434,14 @@ class _CarritoView extends StatelessWidget {
             top: false,
             child: Container(
               color: AppColors.blancoCalido,
-              padding: const EdgeInsets.all(16),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52),
-                    backgroundColor: AppColors.vinoOscuro,
-                    foregroundColor: AppColors.blancoCalido,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    textStyle: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(builder: (_) => const CheckoutView()),
-                  ),
-                  icon: const Icon(Icons.lock_outline, size: 20),
-                  label: const Text('Pagar con PayPal'),
+              padding: AppTheme.padding16,
+              child: AppPrimaryButton.icon(
+                minHeight: 52,
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const CheckoutView()),
                 ),
+                icon: const Icon(Icons.lock_outline, size: 20),
+                text: 'Pagar con PayPal',
               ),
             ),
           ),
@@ -520,21 +465,9 @@ class _CartItemTile extends StatelessWidget {
     final id = producto.id;
     final precio = producto.precioFinal ?? producto.precioNormal ?? 0;
 
-    return Container(
+    return AppOutlineCard(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.blancoCalido,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.rosaBeigeClaro),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.cafeOscuro.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: AppTheme.padding12,
       child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -553,7 +486,7 @@ class _CartItemTile extends StatelessWidget {
                     : _placeholder(),
               ),
             ),
-            const SizedBox(width: 12),
+            AppTheme.spacer12,
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -571,47 +504,47 @@ class _CartItemTile extends StatelessWidget {
                                 producto.marca!.nombre,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.terracota,
-                                  letterSpacing: 0.4,
-                                ),
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.terracota,
+                                      letterSpacing: 0.4,
+                                    ),
                               ),
+                            AppTheme.spacer2,
                             Text(
                               producto.nombre,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                height: 1.15,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.cafeOscuro,
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    height: 1.15,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.cafeOscuro,
+                                    letterSpacing: 0.2,
+                                  ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      AppTheme.spacer8,
                       Text(
                         '\$${(precio * item.cantidad).toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                          color: AppColors.vinoOscuro,
-                        ),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.vinoOscuro,
+                              letterSpacing: 0.2,
+                            ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 5),
+                  AppTheme.spacer5,
                   Text(
                     '\$${precio.toStringAsFixed(2)} c/u',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.cafeOscuro.withValues(alpha: 0.55),
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.cafeOscuro.withValues(alpha: 0.55),
+                          letterSpacing: 0.2,
+                        ),
                   ),
-                  const SizedBox(height: 8),
+                  AppTheme.spacer8,
                   Row(
                     children: [
                       _QtyButton(
@@ -623,11 +556,11 @@ class _CartItemTile extends StatelessWidget {
                         child: Text(
                           '${item.cantidad}',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: AppColors.cafeOscuro,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.cafeOscuro,
+                                letterSpacing: 0.2,
+                              ),
                         ),
                       ),
                       _QtyButton(
@@ -683,7 +616,7 @@ class _QtyButton extends StatelessWidget {
               ? AppColors.rosaBeigeClaro
               : AppColors.rosaBeigeClaro.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(7),
-          border: Border.all(color: AppColors.rosaNude.withValues(alpha: 0.5)),
+          border: Border.all(color: AppColors.rosaBeigeClaro),
         ),
         child: Center(
           child: Icon(
@@ -712,67 +645,57 @@ class _ResumenPedido extends StatelessWidget {
     // El backend no añade un impuesto adicional al total de los productos.
     final total = subtotal + envio;
 
-    return Container(
+    return AppOutlineCard(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.blancoCalido,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.rosaBeigeClaro),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.cafeOscuro.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: AppTheme.padding16,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'RESUMEN DEL PEDIDO',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.5,
-              color: AppColors.cafeOscuro.withValues(alpha: 0.5),
-            ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.5,
+                  color: AppColors.cafeOscuro.withValues(alpha: 0.5),
+                ),
           ),
-          const SizedBox(height: 14),
+          AppTheme.spacer14,
           _FilaResumen(
             label: 'Subtotal (${cart.totalArticulos})',
             valor: '\$${subtotal.toStringAsFixed(2)}',
           ),
-          const SizedBox(height: 6),
-          const _FilaResumen(
+          AppTheme.spacer6,
+          _FilaResumen(
             label: 'Total de envío',
             valor: 'Gratis',
             valorColor: AppColors.terracota,
           ),
-          const SizedBox(height: 14),
-          const Divider(color: AppColors.rosaBeigeClaro),
-          const SizedBox(height: 10),
+          AppTheme.spacer14,
+          Container(
+            height: 1,
+            color: AppColors.rosaBeigeClaro,
+          ),
+          AppTheme.spacer10,
           Row(
             children: [
-              const Text(
+              Text(
                 'Total',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.cafeOscuro,
-                ),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.cafeOscuro,
+                      letterSpacing: -0.5,
+                    ),
               ),
               Expanded(
                 child: Text(
                   '\$${total.toStringAsFixed(2)}',
                   textAlign: TextAlign.right,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.vinoOscuro,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.vinoOscuro,
+                        letterSpacing: -0.5,
+                      ),
                 ),
               ),
             ],
@@ -800,19 +723,19 @@ class _FilaResumen extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 13,
-            color: AppColors.cafeOscuro.withValues(alpha: 0.65),
-          ),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.cafeOscuro.withValues(alpha: 0.65),
+                letterSpacing: 0.2,
+              ),
         ),
         const Spacer(),
         Text(
           valor,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: valorColor ?? AppColors.cafeOscuro,
-          ),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: valorColor ?? AppColors.cafeOscuro,
+                letterSpacing: 0.2,
+              ),
         ),
       ],
     );
