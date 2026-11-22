@@ -15,7 +15,6 @@ name: Invitado y validación del formulario
     element:
       text: "Continuar"
     timeout: 20000
-    center: true
 - tapOn: "Continuar"
 - assertVisible: "El correo es obligatorio"
 - assertVisible: "Ingresa tu contraseña"
@@ -27,7 +26,6 @@ name: Invitado y validación del formulario
     element:
       text: "Continuar"
     timeout: 20000
-    center: true
 - tapOn: "Continuar"
 - assertVisible: "Ingresa un correo válido"
 - takeScreenshot: "reports/maestro/login-validacion"
