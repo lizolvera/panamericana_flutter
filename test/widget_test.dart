@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -13,8 +14,12 @@ import 'package:panamericana_flutter/ui/features/cart/view_models/cart_view_mode
 import 'package:panamericana_flutter/ui/features/catalog/view_models/catalog_view_model.dart';
 import 'package:panamericana_flutter/ui/features/catalog/views/product_detail_view.dart';
 import 'package:panamericana_flutter/ui/features/shell/tab_index_notifier.dart';
+import 'package:panamericana_flutter/ui/theme/app_theme.dart';
 
 void main() {
+  setUpAll(() {
+    GoogleFonts.config.allowRuntimeFetching = false;
+  });
   testWidgets('La app arranca mostrando el catálogo (vista invitado)',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
@@ -68,15 +73,16 @@ void main() {
           ChangeNotifierProvider(create: (_) => CartViewModel()),
           ChangeNotifierProvider(create: (_) => TabIndexNotifier()),
         ],
-        child: const MaterialApp(
-          home: ProductDetailView(productoId: 'abc123'),
+        child: MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: const ProductDetailView(productoId: 'abc123'),
         ),
       ),
     );
 
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle(const Duration(seconds: 2));
 
-    expect(find.text('Panamericana'), findsOneWidget);
+    expect(find.text('Detalle'), findsOneWidget);
     expect(find.text('Reintentar'), findsOneWidget);
   });
 }

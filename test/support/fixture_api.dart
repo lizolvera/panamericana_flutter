@@ -298,7 +298,8 @@ Future<void> renderFixture(
 }
 
 Finder field(String label) => find.byWidgetPredicate(
-  (w) => w is TextField && w.decoration?.labelText == label,
+  (w) => w is TextField && 
+        (w.decoration?.labelText == label || w.decoration?.hintText == label),
 );
 Future<void> fill(WidgetTester tester, String label, String value) async {
   final target = field(label);
@@ -307,10 +308,8 @@ Future<void> fill(WidgetTester tester, String label, String value) async {
 }
 
 Future<void> press(WidgetTester tester, String text) async {
-  final button = find.widgetWithText(FilledButton, text);
-  final target = button.evaluate().isNotEmpty
-      ? button.last
-      : find.text(text).last;
+  // Buscar por el texto directamente, ya que los botones pueden estar anidados
+  final target = find.text(text).last;
   await tester.ensureVisible(target);
   await tester.pumpAndSettle();
   await tester.tap(target);

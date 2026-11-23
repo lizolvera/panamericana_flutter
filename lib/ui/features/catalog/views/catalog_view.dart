@@ -196,7 +196,7 @@ class _CatalogoCargado extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1200),
         child: ListView(
-          padding: const EdgeInsets.only(bottom: 24),
+          padding: const EdgeInsets.only(bottom: 100),
           children: [
             const SizedBox(height: 10),
             if (vm.carruseles.isNotEmpty) _Carrusel(carruseles: vm.carruseles),
@@ -941,7 +941,13 @@ class _BotonAnterior extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8),
         minimumSize: const Size(0, 36),
         visualDensity: VisualDensity.compact,
-        textStyle: const TextStyle(fontSize: 13),
+        foregroundColor: AppColors.vino,
+        textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.vino,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              letterSpacing: 0.2,
+            ),
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
@@ -968,7 +974,13 @@ class _BotonSiguiente extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8),
         minimumSize: const Size(0, 36),
         visualDensity: VisualDensity.compact,
-        textStyle: const TextStyle(fontSize: 13),
+        foregroundColor: AppColors.vino,
+        textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.vino,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              letterSpacing: 0.2,
+            ),
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,

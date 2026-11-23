@@ -8,6 +8,8 @@ import '../../cart/view_models/cart_view_model.dart';
 import '../../shell/shell_scaffold.dart';
 import '../../shell/tab_index_notifier.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
+import '../../../shared/widgets/widgets.dart';
 import '../view_models/product_detail_view_model.dart';
 
 /// **View del detalle de producto** (vista invitado).
@@ -36,6 +38,8 @@ class ProductDetailView extends StatelessWidget {
         ..loadProduct(productoId)
         ..loadSimilares(productoId),
       child: ShellScaffold(
+        isDetail: true,
+        titleText: 'Detalle',
         body: _ProductDetailBody(
           productoId: productoId,
           productoInicial: productoInicial,
@@ -84,30 +88,38 @@ class _ProductDetailBody extends StatelessWidget {
           // Mostrar al instante lo que trae el catálogo (con Hero).
           return _Detalle(producto: inicial, similares: vm.similares);
         }
-        return const Center(child: CircularProgressIndicator());
+        return Center(
+          child: CircularProgressIndicator(
+            color: AppColors.vino,
+          ),
+        );
       case ProductDetailStatus.error:
         return Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.cloud_off,
                 size: 48,
-                color: AppColors.terracota,
+                color: AppColors.terracota.withValues(alpha: 0.8),
               ),
-              const SizedBox(height: 8),
+              AppTheme.spacer8,
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: AppTheme.horizontal24,
                 child: Text(
                   vm.errorMessage ?? 'Error al cargar el producto',
                   textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.cafeOscuro,
+                        letterSpacing: 0.2,
+                      ),
                 ),
               ),
-              const SizedBox(height: 12),
-              FilledButton(
+              AppTheme.spacer12,
+              AppPrimaryButton(
                 onPressed: () =>
                     context.read<ProductDetailViewModel>().loadProduct(productoId),
-                child: const Text('Reintentar'),
+                text: 'Reintentar',
               ),
             ],
           ),
@@ -204,9 +216,9 @@ class _DetalleState extends State<_Detalle> with SingleTickerProviderStateMixin 
               Expanded(
                 flex: 5,
                 child: Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: AppTheme.padding20,
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(20),
                     child: AspectRatio(
                       aspectRatio: 1,
                       child: _imagenConHero(producto),
@@ -246,7 +258,7 @@ class _DetalleState extends State<_Detalle> with SingleTickerProviderStateMixin 
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: AppTheme.padding16,
                 child: _infoContenido(
                   theme: theme,
                   producto: producto,
@@ -287,15 +299,37 @@ class _DetalleState extends State<_Detalle> with SingleTickerProviderStateMixin 
                     if (producto.marca != null &&
                         producto.marca!.nombre.isNotEmpty)
                       Chip(
-                        label: Text(producto.marca!.nombre),
-                        avatar: const Icon(Icons.business, size: 18),
+                        label: Text(
+                          producto.marca!.nombre,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.vino,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.2,
+                              ),
+                        ),
+                        avatar: Icon(Icons.business, size: 18, color: AppColors.vino),
+                        backgroundColor: AppColors.rosaBeigeClaro,
+                        side: BorderSide.none,
+                        shape: const StadiumBorder(),
                       ),
                     if (producto.familia != null &&
                         producto.familia!.nombre.isNotEmpty)
-                      Chip(label: Text(producto.familia!.nombre)),
+                      Chip(
+                        label: Text(
+                          producto.familia!.nombre,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.vino,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.2,
+                              ),
+                        ),
+                        backgroundColor: AppColors.rosaBeigeClaro,
+                        side: BorderSide.none,
+                        shape: const StadiumBorder(),
+                      ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                AppTheme.spacer12,
               ],
             ),
           ),
@@ -308,9 +342,13 @@ class _DetalleState extends State<_Detalle> with SingleTickerProviderStateMixin 
             children: [
               Text(
                 producto.nombre,
-                style: theme.textTheme.headlineSmall,
+                style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.cafeOscuro,
+                      letterSpacing: -0.5,
+                    ),
               ),
-              const SizedBox(height: 8),
+              AppTheme.spacer8,
               if (tieneOferta) ...[
                 Wrap(
                   spacing: 8,
@@ -318,43 +356,48 @@ class _DetalleState extends State<_Detalle> with SingleTickerProviderStateMixin 
                   children: [
                     Text(
                       '\$${(producto.precioNormal ?? 0).toStringAsFixed(2)}',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        decoration: TextDecoration.lineThrough,
-                        color: AppColors.cafeOscuro.withValues(alpha: 0.42),
-                      ),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                            decoration: TextDecoration.lineThrough,
+                            color: AppColors.cafeOscuro.withValues(alpha: 0.42),
+                            letterSpacing: 0.2,
+                          ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.rosaBeigeClaro,
+                        color: AppColors.vino,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         'OFERTA ${producto.ofertaAplicada!.nombre}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.vinoOscuro,
-                          fontWeight: FontWeight.w700,
-                        ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.blancoCalido,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.4,
+                            ),
                       ),
                     ),
                   ],
                 ),
                 Text(
                   '\$${precio.toStringAsFixed(2)}',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                        color: AppColors.vinoOscuro,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
                 ),
               ] else
                 Text(
                   '\$${precio.toStringAsFixed(2)}',
-                  style: theme.textTheme.headlineMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                        color: AppColors.vinoOscuro,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
                 ),
-              const SizedBox(height: 12),
+              AppTheme.spacer12,
               if (producto.precioMayoreo != null)
                 _fila(
                   'Precio mayoreo',
@@ -374,7 +417,11 @@ class _DetalleState extends State<_Detalle> with SingleTickerProviderStateMixin 
                     ? '${producto.stock} disponibles'
                     : 'Agotado',
               ),
-              const Divider(height: 32),
+              AppTheme.spacer16,
+              Container(
+                height: 1,
+                color: AppColors.rosaBeigeClaro,
+              ),
             ],
           ),
         ),
@@ -385,14 +432,22 @@ class _DetalleState extends State<_Detalle> with SingleTickerProviderStateMixin 
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Descripción', style: theme.textTheme.titleMedium),
-              const SizedBox(height: 4),
+              Text(
+                'Descripción',
+                style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.cafeOscuro,
+                      letterSpacing: -0.5,
+                    ),
+              ),
+              AppTheme.spacer4,
               Text(
                 producto.descripcion ?? 'Sin descripción disponible.',
-                style: TextStyle(
-                  color: AppColors.cafeOscuro.withValues(alpha: 0.7),
-                  height: 1.45,
-                ),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.cafeOscuro.withValues(alpha: 0.7),
+                      height: 1.45,
+                      letterSpacing: 0.2,
+                    ),
               ),
             ],
           ),
@@ -405,19 +460,22 @@ class _DetalleState extends State<_Detalle> with SingleTickerProviderStateMixin 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 20),
+                AppTheme.spacer20,
                 Text(
                   'Productos similares',
-                  style: theme.textTheme.titleMedium,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.cafeOscuro,
+                        letterSpacing: -0.5,
+                      ),
                 ),
-                const SizedBox(height: 8),
+                AppTheme.spacer8,
                 SizedBox(
                   height: 180,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: widget.similares.length,
-                    separatorBuilder: (_, _) =>
-                        const SizedBox(width: 8),
+                    separatorBuilder: (_, _) => AppTheme.widthSpacer8,
                     itemBuilder: (context, i) => _ProductoMiniCard(
                       producto: widget.similares[i],
                     ),
@@ -450,16 +508,18 @@ class _DetalleState extends State<_Detalle> with SingleTickerProviderStateMixin 
           children: [
             Text(
               etiqueta,
-              style: TextStyle(
-                color: AppColors.cafeOscuro.withValues(alpha: 0.55),
-              ),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.cafeOscuro.withValues(alpha: 0.55),
+                    letterSpacing: 0.2,
+                  ),
             ),
             Text(
               valor,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                color: AppColors.cafeOscuro,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.cafeOscuro,
+                    letterSpacing: 0.2,
+                  ),
             ),
           ],
         ),
@@ -488,56 +548,61 @@ class _ProductoMiniCard extends StatelessWidget {
 
     return SizedBox(
       width: 140,
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => ProductDetailView(
-                productoId: producto.id!,
-                productoInicial: producto,
-              ),
+      child: AppCard(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: AppColors.rosaBeigeClaro),
+        ),
+        elevation: 2,
+        shadowColor: AppColors.vinoOscuro.withValues(alpha: 0.08),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ProductDetailView(
+              productoId: producto.id!,
+              productoInicial: producto,
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: (producto.imagenUrl != null &&
-                        producto.imagenUrl!.isNotEmpty)
-                    ? Image.network(
-                        producto.imagenUrl!,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        errorBuilder: (_, _, _) => _placeholderMini(),
-                      )
-                    : _placeholderMini(),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: (producto.imagenUrl != null &&
+                      producto.imagenUrl!.isNotEmpty)
+                  ? Image.network(
+                      producto.imagenUrl!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      errorBuilder: (_, _, _) => _placeholderMini(),
+                    )
+                  : _placeholderMini(),
+            ),
+            Padding(
+              padding: AppTheme.padding6,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    producto.nombre,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                          letterSpacing: 0.2,
+                        ),
+                  ),
+                  AppTheme.spacer2,
+                  Text(
+                    '\$${precio.toStringAsFixed(2)}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.vinoOscuro,
+                          letterSpacing: 0.2,
+                        ),
+                  ),
+                ],
               ),
-              Padding(
-                padding: const EdgeInsets.all(6),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      producto.nombre,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '\$${precio.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -569,16 +634,17 @@ class _BarraCompra extends StatelessWidget {
               color: AppColors.rosaBeigeClaro,
               size: 18,
             ),
-            const SizedBox(width: 8),
+            AppTheme.widthSpacer8,
             Expanded(
               child: Text(
                 'Agregado: ${producto.nombre}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.blancoCalido,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.2,
+                    ),
               ),
             ),
             TextButton(
@@ -592,7 +658,7 @@ class _BarraCompra extends StatelessWidget {
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.rosaBeigeClaro,
                 minimumSize: const Size(40, 32),
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+                padding: AppTheme.horizontal8,
               ),
               child: const Text('Ver'),
             ),
@@ -615,13 +681,14 @@ class _BarraCompra extends StatelessWidget {
     final esCliente = auth.isCliente;
 
     return Material(
-      elevation: 4,
+      elevation: 2,
+      shadowColor: AppColors.vinoOscuro.withValues(alpha: 0.08),
       color: AppColors.blancoCalido,
       child: SafeArea(
         top: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: FilledButton.icon(
+          child: AppPrimaryButton.icon(
             onPressed: () {
               if (!esCliente) {
                 // Los invitados no compran: se les pide iniciar sesión.
@@ -638,12 +705,7 @@ class _BarraCompra extends StatelessWidget {
               _notificarAgregado(context);
             },
             icon: const Icon(Icons.add_shopping_cart),
-            label: Text(
-              esCliente ? 'Agregar al carrito' : 'Inicia sesión para comprar',
-            ),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-            ),
+            text: esCliente ? 'Agregar al carrito' : 'Inicia sesión para comprar',
           ),
         ),
       ),
