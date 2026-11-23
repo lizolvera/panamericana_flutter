@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:dio/dio.dart';
@@ -68,11 +69,16 @@ void main() {
         reason: 'No se encontro MIS DIRECCIONES en el perfil');
     expect(find.text('MIS COMPRAS'), findsOneWidget,
         reason: 'No se encontro MIS COMPRAS en el perfil');
-    // El perfil usa CustomScrollView con SliverAppBar colapsable: hacer scroll
-    // hasta que el tile quede visible y no quede tapado por el header.
-    await tester.scrollUntilVisible(find.text('MIS COMPRAS'), 100);
+    // El perfil usa CustomScrollView con SliverAppBar colapsable (varios
+    // Scrollable en pantalla). Usamos el ultimo (el del body) y hacemos un
+    // drag extra para que el tile quede debajo del header flotante.
+    final scrollable = find.byType(Scrollable).last;
+    await tester.scrollUntilVisible(find.text('MIS COMPRAS'), 100,
+        scrollable: scrollable);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('MIS COMPRAS'), warnIfMissed: false);
+    await tester.drag(scrollable, const Offset(0, -60));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('MIS COMPRAS'));
     await tester.pumpAndSettle();
     for (
       var i = 0;
