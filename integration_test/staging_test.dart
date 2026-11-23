@@ -82,13 +82,15 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('MIS COMPRAS'), warnIfMissed: false);
     await tester.pumpAndSettle();
-    for (
-      var i = 0;
-      i < 60 && find.textContaining('Pedido ').evaluate().isEmpty;
-      i++
-    ) {
+    // Esperar a que termine la carga: aparezca un Pedido o el mensaje de vacío.
+    for (var i = 0; i < 120; i++) {
+      if (find.textContaining('Pedido ').evaluate().isNotEmpty) break;
+      if (find.text('Todavía no tienes compras.').evaluate().isNotEmpty) break;
       await tester.pump(const Duration(milliseconds: 500));
     }
+    final vacio = find.text('Todavía no tienes compras.').evaluate().isNotEmpty;
+    expect(vacio, isFalse,
+        reason: 'La vista llego al estado vacio: la app no recibio pedidos del API aunque el test verifico que existen');
     expect(find.textContaining('Pedido '), findsWidgets,
         reason: 'No se encontraron pedidos en MIS COMPRAS');
     expect(tester.takeException(), isNull,
