@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/widgets/widgets.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
 import '../../shell/shell_scaffold.dart';
 import '../view_models/profile_view_model.dart';
 
 /// **View de contraseña**: cambiar la contraseña actual (misma validación
 /// que la web: mínimo 12 caracteres, mayúscula, número y símbolo).
+///
+/// Diseño boutique: tarjeta con encabezado, campos con iconos, indicador
+/// visual de requisitos que se ilumina al escribir y botón primario.
 class PasswordView extends StatefulWidget {
   const PasswordView({super.key, required this.profileVm});
 
@@ -44,7 +49,12 @@ class _PasswordViewState extends State<PasswordView> {
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(_vm.mensaje ?? (ok ? 'Listo' : 'Error'))),
+      SnackBar(
+        content: Text(_vm.mensaje ?? (ok ? 'Listo' : 'Error')),
+        backgroundColor: ok ? AppColors.vino : AppColors.vinoOscuro,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: AppTheme.radius12),
+      ),
     );
     if (ok) {
       _vm.reiniciarAccion();
@@ -58,55 +68,58 @@ class _PasswordViewState extends State<PasswordView> {
   Widget build(BuildContext context) {
     return ShellScaffold(
       titleText: 'Contraseña',
-      body: ListenableBuilder(
-        listenable: _vm,
-        builder: (context, _) {
-          final guardando = _vm.accion == AccionStatus.working;
+      body: Container(
+        color: AppColors.fondoGeneral,
+        child: ListenableBuilder(
+          listenable: _vm,
+          builder: (context, _) {
+            final guardando = _vm.accion == AccionStatus.working;
 
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 580),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Form(
-                  key: _formKey,
+            return SingleChildScrollView(
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 96), // bottom deja espacio al NavigationBar (extendBody)
+              child: Form(
+                key: _formKey,
+                child: AppFormCard(
+                  maxWidth: 580,
+                  header: const AppFormHeader(
+                    icon: Icons.lock_outline,
+                    title: 'Cambiar contraseña',
+                    caption:
+                        'Elige una contraseña segura que no hayas usado antes.',
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(
-                        'Cambiar contraseña',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleLarge
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
+                      AppFormField(
                         controller: _currentCtrl,
                         obscureText: _ocultar,
-                        decoration: InputDecoration(
-                          labelText: 'Contraseña actual',
-                          border: const OutlineInputBorder(),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _ocultar ? Icons.visibility_off : Icons.visibility,
-                            ),
-                            onPressed: () =>
-                                setState(() => _ocultar = !_ocultar),
+                        labelText: 'Contraseña actual',
+                        hintText: 'Tu contraseña actual',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        textInputAction: TextInputAction.next,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _ocultar
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            size: 20,
                           ),
+                          onPressed: () =>
+                              setState(() => _ocultar = !_ocultar),
                         ),
                         validator: (v) => (v == null || v.isEmpty)
                             ? 'Ingresa tu contraseña actual'
                             : null,
                       ),
-                      const SizedBox(height: 12),
-                      TextFormField(
+                      AppTheme.spacer16,
+                      AppFormField(
                         controller: _newCtrl,
                         obscureText: _ocultar,
-                        decoration: const InputDecoration(
-                          labelText: 'Nueva contraseña',
-                          border: OutlineInputBorder(),
-                        ),
+                        labelText: 'Nueva contraseña',
+                        hintText: 'Mínimo 12 caracteres',
+                        prefixIcon: const Icon(Icons.vpn_key_outlined),
+                        textInputAction: TextInputAction.next,
+                        onChanged: (_) => setState(() {}),
                         validator: (v) {
                           if (v == null || v.isEmpty) {
                             return 'Ingresa una contraseña';
@@ -117,14 +130,14 @@ class _PasswordViewState extends State<PasswordView> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 12),
-                      TextFormField(
+                      AppTheme.spacer16,
+                      AppFormField(
                         controller: _confirmCtrl,
                         obscureText: _ocultar,
-                        decoration: const InputDecoration(
-                          labelText: 'Confirmar nueva contraseña',
-                          border: OutlineInputBorder(),
-                        ),
+                        labelText: 'Confirmar nueva contraseña',
+                        hintText: 'Repite la nueva contraseña',
+                        prefixIcon: const Icon(Icons.check_circle_outline),
+                        textInputAction: TextInputAction.done,
                         validator: (v) {
                           if (v == null || v.isEmpty) {
                             return 'Confirma tu nueva contraseña';
@@ -134,33 +147,30 @@ class _PasswordViewState extends State<PasswordView> {
                               : null;
                         },
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'La contraseña debe tener mínimo 12 caracteres e incluir '
-                        'una mayúscula, un número y un símbolo.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.cafeOscuro.withValues(alpha: 0.56),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      FilledButton(
+                      AppTheme.spacer16,
+                      AppPasswordRequirements(password: _newCtrl.text),
+                      AppTheme.spacer24,
+                      AppPrimaryButton(
                         onPressed: guardando ? null : _guardar,
+                        text: 'Cambiar contraseña',
                         child: guardando
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.blancoCalido,
+                                ),
                               )
-                            : const Text('Cambiar contraseña'),
+                            : null,
                       ),
                     ],
                   ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

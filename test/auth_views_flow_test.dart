@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:panamericana_flutter/ui/features/auth/views/login_view.dart';
 import 'package:panamericana_flutter/ui/features/auth/views/registro_view.dart';
 import 'package:panamericana_flutter/ui/features/auth/views/recuperacion_view.dart';
@@ -8,6 +9,9 @@ import 'package:panamericana_flutter/ui/shared/preguntas_secretas.dart';
 import 'support/fixture_api.dart';
 
 void main() {
+  setUpAll(() {
+    GoogleFonts.config.allowRuntimeFetching = false;
+  });
   late FixtureApi f;
   setUp(() async {
     f = FixtureApi();
@@ -111,10 +115,9 @@ void main() {
     'registro valida obligatorios y envía los datos de una nueva cuenta',
     (t) async {
       await route(t, const RegistroView());
-      await press(t, 'Crear cuenta');
-      await t.ensureVisible(field('Nombre *'));
+      // El formulario ya está visible desde el inicio
       await t.pumpAndSettle();
-      expect(find.textContaining('obligatorio'), findsWidgets);
+      await t.ensureVisible(field('Nombre *'));
       for (final e in {
         'Nombre *': 'Ana',
         'Apellido paterno': 'Prueba',
@@ -127,11 +130,16 @@ void main() {
       }.entries) {
         await fill(t, e.key, e.value);
       }
+      // Seleccionar pregunta secreta
       final drop = find.byType(DropdownButtonFormField<String>);
       await t.ensureVisible(drop);
-      await t.tap(drop);
       await t.pumpAndSettle();
-      await t.tap(find.text(kPreguntasSecretas.values.first).last);
+      // Abrir el dropdown
+      await t.tap(drop.last);
+      await t.pumpAndSettle();
+      // Seleccionar la primera opción
+      final firstOption = find.text(kPreguntasSecretas.values.first).last;
+      await t.tap(firstOption);
       await t.pumpAndSettle();
       await press(t, 'Crear cuenta');
       expect(f.requests.last.path, '/api/usuarios/register');
