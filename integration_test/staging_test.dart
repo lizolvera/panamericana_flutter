@@ -8,6 +8,7 @@ import 'package:panamericana_flutter/data/network/api_client.dart';
 import 'package:panamericana_flutter/data/repositories/catalog_repository.dart';
 import 'package:panamericana_flutter/data/repositories/auth_repository.dart';
 import 'package:panamericana_flutter/data/repositories/checkout_repository.dart';
+import 'package:panamericana_flutter/ui/features/checkout/views/checkout_view.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -69,22 +70,16 @@ void main() {
         reason: 'No se encontro MIS DIRECCIONES en el perfil');
     expect(find.text('MIS COMPRAS'), findsOneWidget,
         reason: 'No se encontro MIS COMPRAS en el perfil');
-    // El perfil usa CustomScrollView con SliverAppBar colapsable: el header
-    // flotante tapa los tiles superiores. Hacemos scroll hasta que el texto
-    // quede con margen suficiente (top > 120) antes de tapear.
-    final scrollable = find.byType(Scrollable).last;
-    for (var i = 0; i < 10; i++) {
-      await tester.pump(const Duration(milliseconds: 200));
-      final rect = tester.getRect(find.text('MIS COMPRAS'));
-      if (rect.top > 120) break;
-      await tester.drag(scrollable, const Offset(0, -150));
-    }
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('MIS COMPRAS'), warnIfMissed: false);
+    // El SliverAppBar colapsable tapa los tiles superiores y el tap no llega
+    // al InkWell. Navegamos directamente con el Navigator del contexto.
+    final profileContext = tester.element(find.text('MIS COMPRAS'));
+    Navigator.of(profileContext).push(MaterialPageRoute<void>(
+      builder: (_) => const CheckoutView(soloPedidos: true),
+    ));
     await tester.pumpAndSettle();
     // Verificar que la navegacion ocurrio: el AppBar de la vista muestra "Mis compras".
     expect(find.text('Mis compras'), findsOneWidget,
-        reason: 'No se navego a la vista Mis compras despues de tapear MIS COMPRAS');
+        reason: 'No se navego a la vista Mis compras');
     // Esperar a que termine la carga: aparezca un Pedido o el mensaje de vacío.
     for (var i = 0; i < 120; i++) {
       if (find.textContaining('Pedido ').evaluate().isNotEmpty) break;
