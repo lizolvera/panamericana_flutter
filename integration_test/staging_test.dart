@@ -82,6 +82,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('MIS COMPRAS'), warnIfMissed: false);
     await tester.pumpAndSettle();
+    // Verificar que la navegacion ocurrio: el AppBar de la vista muestra "Mis compras".
+    expect(find.text('Mis compras'), findsOneWidget,
+        reason: 'No se navego a la vista Mis compras despues de tapear MIS COMPRAS');
     // Esperar a que termine la carga: aparezca un Pedido o el mensaje de vacío.
     for (var i = 0; i < 120; i++) {
       if (find.textContaining('Pedido ').evaluate().isNotEmpty) break;
