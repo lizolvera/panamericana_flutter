@@ -51,8 +51,11 @@ void main() {
     for (var i = 0; i < 40 && find.text('Todos los productos').evaluate().isEmpty; i++) {
       await tester.pump(const Duration(milliseconds: 500));
     }
+    expect(find.text('Todos los productos'), findsOneWidget,
+        reason: 'La app no llego a pintar el catalogo inicial');
     await tester.pump(const Duration(seconds: 2));
-    // Solo hay un "Perfil" visible (el de la NavigationBar) porque el catálogo no lo tiene.
+    expect(find.text('Perfil'), findsOneWidget,
+        reason: 'No se encontro el boton Perfil en la barra de navegacion');
     await tester.tap(find.text('Perfil'));
     for (
       var i = 0;
