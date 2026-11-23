@@ -68,9 +68,12 @@ void main() {
         reason: 'No se encontro MIS DIRECCIONES en el perfil');
     expect(find.text('MIS COMPRAS'), findsOneWidget,
         reason: 'No se encontro MIS COMPRAS en el perfil');
-    await tester.ensureVisible(find.text('MIS COMPRAS'));
+    // El perfil usa CustomScrollView con SliverAppBar colapsable: hacer scroll
+    // hasta que el tile quede visible y no quede tapado por el header.
+    await tester.scrollUntilVisible(find.text('MIS COMPRAS'), 100);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('MIS COMPRAS'));
+    await tester.tap(find.text('MIS COMPRAS'), warnIfMissed: false);
+    await tester.pumpAndSettle();
     for (
       var i = 0;
       i < 60 && find.textContaining('Pedido ').evaluate().isEmpty;
