@@ -3,12 +3,17 @@ import 'package:flutter/services.dart';
 
 import '../../../../domain/models/direccion.dart';
 import '../../../shared/form_validators.dart';
+import '../../../shared/widgets/widgets.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
 import '../../shell/shell_scaffold.dart';
 import '../view_models/direcciones_view_model.dart';
 
 /// **View de direcciones**: lista, alta, edición, eliminación y marcado de
 /// dirección predeterminada (CRUD contra /api/usuarios/direcciones).
+///
+/// Diseño boutique: tarjetas con icono y chip, y diálogo de alta/edición con
+/// encabezado, secciones y botones Cancelar/Guardar en fila horizontal.
 class DireccionesView extends StatelessWidget {
   const DireccionesView({super.key, required this.direccionesVm});
 
@@ -31,7 +36,12 @@ class DireccionesView extends StatelessWidget {
 
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(vm.error ?? (ok ? 'Dirección guardada' : 'Error'))),
+      SnackBar(
+        content: Text(vm.error ?? (ok ? 'Dirección guardada' : 'Error')),
+        backgroundColor: ok ? AppColors.vino : AppColors.vinoOscuro,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: AppTheme.radius12),
+      ),
     );
   }
 
@@ -43,15 +53,61 @@ class DireccionesView extends StatelessWidget {
     final confirmado = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Eliminar dirección'),
-        content: Text('¿Eliminar "${direccion.alias}"?'),
+        backgroundColor: AppColors.blancoCalido,
+        shape: RoundedRectangleBorder(borderRadius: AppTheme.radius20),
+        titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
+        contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        actionsAlignment: MainAxisAlignment.end,
+        title: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.vino,
+                borderRadius: AppTheme.radius10,
+              ),
+              child: const Icon(
+                Icons.delete_outline,
+                size: 20,
+                color: AppColors.blancoCalido,
+              ),
+            ),
+            AppTheme.widthSpacer12,
+            Expanded(
+              child: Text(
+                'Eliminar dirección',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.cafeOscuro,
+                    ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          '¿Eliminar "${direccion.alias}"? Esta acción no se puede deshacer.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.cafeOscuro.withValues(alpha: 0.7),
+                height: 1.4,
+              ),
+        ),
         actions: [
-          TextButton(
+          AppTextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+            text: 'Cancelar',
+            color: AppColors.cafeOscuro.withValues(alpha: 0.6),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.vino,
+              foregroundColor: AppColors.blancoCalido,
+              minimumSize: const Size(0, 44),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              shape: RoundedRectangleBorder(borderRadius: AppTheme.radius12),
+            ),
             child: const Text('Eliminar'),
           ),
         ],
@@ -61,7 +117,12 @@ class DireccionesView extends StatelessWidget {
     final ok = await vm.eliminar(direccion.id!);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(vm.error ?? (ok ? 'Dirección eliminada' : 'Error'))),
+      SnackBar(
+        content: Text(vm.error ?? (ok ? 'Dirección eliminada' : 'Error')),
+        backgroundColor: ok ? AppColors.vino : AppColors.vinoOscuro,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: AppTheme.radius12),
+      ),
     );
   }
 
@@ -74,29 +135,30 @@ class DireccionesView extends StatelessWidget {
         tooltip: 'Agregar dirección',
         child: const Icon(Icons.add),
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 700),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Mis direcciones',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.bold),
+      body: Container(
+        color: AppColors.fondoGeneral,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 700),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 20, 20, 4),
+                  child: AppFormHeader(
+                    icon: Icons.location_on_outlined,
+                    title: 'Mis direcciones',
+                    caption: 'Administra tus direcciones de envío.',
+                  ),
                 ),
-              ),
-              Expanded(
-                child: ListenableBuilder(
-                  listenable: direccionesVm,
-                  builder: (context, _) => _cuerpo(context, direccionesVm),
+                Expanded(
+                  child: ListenableBuilder(
+                    listenable: direccionesVm,
+                    builder: (context, _) => _cuerpo(context, direccionesVm),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -112,33 +174,82 @@ class DireccionesView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.cloud_off,
-                size: 48,
-                color: AppColors.terracota,
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppColors.rosaBeigeClaro.withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.cloud_off,
+                  size: 32,
+                  color: AppColors.terracota,
+                ),
               ),
-              const SizedBox(height: 8),
-              Text(vm.error ?? 'Error al cargar direcciones'),
-              const SizedBox(height: 12),
-              FilledButton(onPressed: vm.load, child: const Text('Reintentar')),
+              AppTheme.spacer12,
+              Text(
+                vm.error ?? 'Error al cargar direcciones',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.cafeOscuro,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              AppTheme.spacer16,
+              AppPrimaryButton(
+                onPressed: vm.load,
+                text: 'Reintentar',
+              ),
             ],
           ),
         );
       case DireccionesStatus.initial:
       case DireccionesStatus.loaded:
         if (vm.direcciones.isEmpty) {
-          return const Center(
+          return Center(
             child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Text(
-                'Aún no tienes direcciones.\nToca + para agregar una.',
-                textAlign: TextAlign.center,
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: AppColors.blancoCalido,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.rosaBeigeClaro),
+                      boxShadow: [AppTheme.cardShadow],
+                    ),
+                    child: const Icon(
+                      Icons.location_off_outlined,
+                      size: 34,
+                      color: AppColors.terracota,
+                    ),
+                  ),
+                  AppTheme.spacer16,
+                  Text(
+                    'Aún no tienes direcciones.',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.cafeOscuro,
+                        ),
+                  ),
+                  AppTheme.spacer4,
+                  Text(
+                    'Toca el botón + para agregar una.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.cafeOscuro.withValues(alpha: 0.55),
+                        ),
+                  ),
+                ],
               ),
             ),
           );
         }
         return ListView.builder(
-          padding: const EdgeInsets.only(bottom: 88),
+          padding: const EdgeInsets.only(top: 8, bottom: 88),
           itemCount: vm.direcciones.length,
           itemBuilder: (context, i) {
             final d = vm.direcciones[i];
@@ -154,6 +265,11 @@ class DireccionesView extends StatelessWidget {
                     content: Text(
                       vm.error ?? (ok ? 'Dirección predeterminada' : 'Error'),
                     ),
+                    backgroundColor: ok ? AppColors.vino : AppColors.vinoOscuro,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: AppTheme.radius12,
+                    ),
                   ),
                 );
               },
@@ -164,6 +280,7 @@ class DireccionesView extends StatelessWidget {
   }
 }
 
+/// Tarjeta boutique de una dirección guardada.
 class _DireccionCard extends StatelessWidget {
   const _DireccionCard({
     required this.direccion,
@@ -181,79 +298,154 @@ class _DireccionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.blancoCalido,
+        borderRadius: AppTheme.radius16,
+        border: Border.all(color: AppColors.rosaBeigeClaro.withValues(alpha: 0.7)),
+        boxShadow: [AppTheme.cardShadow],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.rosaBeigeClaro.withValues(alpha: 0.55),
+              borderRadius: AppTheme.radius12,
+            ),
+            child: const Icon(
+              Icons.location_on_outlined,
+              size: 22,
+              color: AppColors.vino,
+            ),
+          ),
+          AppTheme.widthSpacer12,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Text(
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
                         direccion.alias,
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.cafeOscuro,
+                              letterSpacing: -0.3,
+                            ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      if (direccion.predeterminada) ...[
-                        const SizedBox(width: 8),
-                        Chip(
-                          label: const Text('Predeterminada'),
-                          visualDensity: VisualDensity.compact,
-                          backgroundColor:
-                              theme.colorScheme.primaryContainer,
-                          labelStyle: TextStyle(
-                            fontSize: 11,
-                            color: theme.colorScheme.onPrimaryContainer,
-                          ),
+                    ),
+                    if (direccion.predeterminada) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
                         ),
-                      ],
+                        decoration: BoxDecoration(
+                          color: AppColors.vino,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          'Predeterminada',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.blancoCalido,
+                                letterSpacing: 0.4,
+                              ),
+                        ),
+                      ),
                     ],
-                  ),
-                ),
-                PopupMenuButton<String>(
-                  onSelected: (opcion) {
-                    switch (opcion) {
-                      case 'editar':
-                        onEditar();
-                      case 'predeterminada':
-                        onPredeterminada();
-                      case 'eliminar':
-                        onEliminar();
-                    }
-                  },
-                  itemBuilder: (_) => [
-                    const PopupMenuItem(
-                      value: 'editar',
-                      child: Text('Editar'),
-                    ),
-                    const PopupMenuItem(
-                      value: 'predeterminada',
-                      child: Text('Marcar predeterminada'),
-                    ),
-                    const PopupMenuItem(
-                      value: 'eliminar',
-                      child: Text('Eliminar'),
-                    ),
                   ],
+                ),
+                AppTheme.spacer6,
+                _LineaIcono(
+                  icon: Icons.signpost_outlined,
+                  texto:
+                      '${direccion.calle}${direccion.colonia != null && direccion.colonia!.isNotEmpty ? ', ${direccion.colonia}' : ''}',
+                ),
+                _LineaIcono(
+                  icon: Icons.location_city_outlined,
+                  texto:
+                      '${direccion.ciudad}, ${direccion.estado} · CP ${direccion.cp}',
+                ),
+                _LineaIcono(
+                  icon: Icons.phone_outlined,
+                  texto: 'Tel: ${direccion.telefono}',
                 ),
               ],
             ),
-            const SizedBox(height: 4),
-            Text('${direccion.calle}${direccion.colonia != null && direccion.colonia!.isNotEmpty ? ', ${direccion.colonia}' : ''}'),
-            Text('${direccion.ciudad}, ${direccion.estado} · CP ${direccion.cp}'),
-            Text('Tel: ${direccion.telefono}'),
-          ],
-        ),
+          ),
+          PopupMenuButton<String>(
+            onSelected: (opcion) {
+              switch (opcion) {
+                case 'editar':
+                  onEditar();
+                case 'predeterminada':
+                  onPredeterminada();
+                case 'eliminar':
+                  onEliminar();
+              }
+            },
+            itemBuilder: (_) => [
+              const PopupMenuItem(
+                value: 'editar',
+                child: Text('Editar'),
+              ),
+              const PopupMenuItem(
+                value: 'predeterminada',
+                child: Text('Marcar predeterminada'),
+              ),
+              const PopupMenuItem(
+                value: 'eliminar',
+                child: Text('Eliminar'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
-/// Diálogo de alta/edición de una dirección.
+class _LineaIcono extends StatelessWidget {
+  const _LineaIcono({required this.icon, required this.texto});
+
+  final IconData icon;
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: AppColors.terracota),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              texto,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.cafeOscuro.withValues(alpha: 0.65),
+                    letterSpacing: 0.2,
+                  ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Diálogo de alta/edición de una dirección con diseño boutique:
+/// encabezado con icono, secciones, campos estilizados y acciones
+/// Cancelar/Guardar en fila horizontal a mismo ancho.
 class _DialogDireccion extends StatefulWidget {
   const _DialogDireccion({this.existente});
 
@@ -265,14 +457,21 @@ class _DialogDireccion extends StatefulWidget {
 
 class _DialogDireccionState extends State<_DialogDireccion> {
   final _formKey = GlobalKey<FormState>();
-  late final _aliasCtrl = TextEditingController(text: widget.existente?.alias ?? '');
-  late final _calleCtrl = TextEditingController(text: widget.existente?.calle ?? '');
-  late final _coloniaCtrl = TextEditingController(text: widget.existente?.colonia ?? '');
-  late final _ciudadCtrl = TextEditingController(text: widget.existente?.ciudad ?? '');
-  late final _estadoCtrl = TextEditingController(text: widget.existente?.estado ?? '');
+  late final _aliasCtrl =
+      TextEditingController(text: widget.existente?.alias ?? '');
+  late final _calleCtrl =
+      TextEditingController(text: widget.existente?.calle ?? '');
+  late final _coloniaCtrl =
+      TextEditingController(text: widget.existente?.colonia ?? '');
+  late final _ciudadCtrl =
+      TextEditingController(text: widget.existente?.ciudad ?? '');
+  late final _estadoCtrl =
+      TextEditingController(text: widget.existente?.estado ?? '');
   late final _cpCtrl = TextEditingController(text: widget.existente?.cp ?? '');
-  late final _telefonoCtrl = TextEditingController(text: widget.existente?.telefono ?? '');
-  late final _refsCtrl = TextEditingController(text: widget.existente?.referencias ?? '');
+  late final _telefonoCtrl =
+      TextEditingController(text: widget.existente?.telefono ?? '');
+  late final _refsCtrl =
+      TextEditingController(text: widget.existente?.referencias ?? '');
   late bool _predeterminada = widget.existente?.predeterminada ?? false;
 
   @override
@@ -303,170 +502,264 @@ class _DialogDireccionState extends State<_DialogDireccion> {
     });
   }
 
-  InputDecoration _fieldDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      isDense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
+    final editando = widget.existente != null;
+    return Dialog(
       backgroundColor: AppColors.blancoCalido,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 6),
-      contentPadding: const EdgeInsets.fromLTRB(24, 10, 24, 4),
-      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      title: Text(
-        widget.existente == null ? 'Nueva dirección' : 'Editar dirección',
-        style: const TextStyle(
-          color: AppColors.cafeOscuro,
-          fontWeight: FontWeight.w800,
+      shape: RoundedRectangleBorder(borderRadius: AppTheme.radius20),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── Encabezado ────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 12, 0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.vino,
+                      borderRadius: AppTheme.radius14,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.vinoOscuro.withValues(alpha: 0.18),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      editando ? Icons.edit_location_alt_outlined : Icons.add_location_alt_outlined,
+                      size: 22,
+                      color: AppColors.blancoCalido,
+                    ),
+                  ),
+                  AppTheme.widthSpacer14,
+                  Expanded(
+                    child: Text(
+                      editando ? 'Editar dirección' : 'Nueva dirección',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.cafeOscuro,
+                            letterSpacing: -0.5,
+                          ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close, size: 22),
+                    color: AppColors.cafeOscuro.withValues(alpha: 0.5),
+                  ),
+                ],
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 14, 20, 0),
+              child: Divider(
+                height: 1,
+                thickness: 1,
+                color: AppColors.rosaBeigeClaro,
+              ),
+            ),
+
+            // ── Formulario ────────────────────────────────────────────────
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      AppFormSectionLabel('Ubicación'),
+                      AppFormField(
+                        controller: _aliasCtrl,
+                        labelText: 'Alias (ej. Casa)',
+                        hintText: 'Ej. Casa, Oficina',
+                        prefixIcon: const Icon(Icons.label_outline),
+                        textCapitalization: TextCapitalization.words,
+                        inputFormatters: [
+                          FormValidators.addressFormatter,
+                          LengthLimitingTextInputFormatter(40),
+                        ],
+                        validator: (v) =>
+                            FormValidators.requiredAddressText(v, 'El alias'),
+                      ),
+                      AppTheme.spacer12,
+                      AppFormField(
+                        controller: _calleCtrl,
+                        labelText: 'Calle',
+                        hintText: 'Calle y número',
+                        prefixIcon: const Icon(Icons.signpost_outlined),
+                        textCapitalization: TextCapitalization.words,
+                        inputFormatters: [
+                          FormValidators.addressFormatter,
+                          LengthLimitingTextInputFormatter(100),
+                        ],
+                        validator: (v) =>
+                            FormValidators.requiredAddressText(v, 'La calle'),
+                      ),
+                      AppTheme.spacer12,
+                      AppFormField(
+                        controller: _coloniaCtrl,
+                        labelText: 'Colonia',
+                        prefixIcon: const Icon(Icons.location_city_outlined),
+                        textCapitalization: TextCapitalization.words,
+                        inputFormatters: [
+                          FormValidators.addressFormatter,
+                          LengthLimitingTextInputFormatter(80),
+                        ],
+                        validator: (v) => FormValidators.optionalAddressText(
+                          v,
+                          'La colonia',
+                        ),
+                      ),
+                      AppTheme.spacer12,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: AppFormField(
+                              controller: _ciudadCtrl,
+                              labelText: 'Ciudad',
+                              prefixIcon: const Icon(Icons.location_on_outlined),
+                              textCapitalization: TextCapitalization.words,
+                              inputFormatters: [
+                                FormValidators.lettersOnlyFormatter,
+                                LengthLimitingTextInputFormatter(60),
+                              ],
+                              validator: (v) =>
+                                  FormValidators.requiredLetters(v, 'La ciudad'),
+                            ),
+                          ),
+                          AppTheme.widthSpacer12,
+                          Expanded(
+                            child: AppFormField(
+                              controller: _estadoCtrl,
+                              labelText: 'Estado',
+                              textCapitalization: TextCapitalization.words,
+                              inputFormatters: [
+                                FormValidators.lettersOnlyFormatter,
+                                LengthLimitingTextInputFormatter(60),
+                              ],
+                              validator: (v) =>
+                                  FormValidators.requiredLetters(v, 'El estado'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      AppTheme.spacer12,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: AppFormField(
+                              controller: _cpCtrl,
+                              labelText: 'CP',
+                              hintText: '5 dígitos',
+                              prefixIcon: const Icon(Icons.markunread_mailbox_outlined),
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FormValidators.digitsOnlyFormatter,
+                                LengthLimitingTextInputFormatter(5),
+                              ],
+                              validator: FormValidators.requiredPostalCode,
+                            ),
+                          ),
+                          AppTheme.widthSpacer12,
+                          Expanded(
+                            child: AppFormField(
+                              controller: _telefonoCtrl,
+                              labelText: 'Teléfono',
+                              hintText: '10 dígitos',
+                              prefixIcon: const Icon(Icons.phone_outlined),
+                              keyboardType: TextInputType.phone,
+                              inputFormatters: [
+                                FormValidators.digitsOnlyFormatter,
+                                LengthLimitingTextInputFormatter(10),
+                              ],
+                              validator: FormValidators.requiredPhone,
+                            ),
+                          ),
+                        ],
+                      ),
+                      AppTheme.spacer20,
+                      AppFormSectionLabel('Detalles'),
+                      AppFormField(
+                        controller: _refsCtrl,
+                        labelText: 'Referencias',
+                        hintText: 'Ej. Puerta azul, frente al parque',
+                        prefixIcon: const Icon(Icons.notes_outlined),
+                        textCapitalization: TextCapitalization.sentences,
+                        inputFormatters: [
+                          FormValidators.addressFormatter,
+                          LengthLimitingTextInputFormatter(120),
+                        ],
+                        validator: (v) => FormValidators.optionalAddressText(
+                          v,
+                          'Las referencias',
+                        ),
+                      ),
+                      AppTheme.spacer12,
+                      Material(
+                        color: AppColors.fondoGeneral,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: AppTheme.radius12,
+                          side: BorderSide(
+                            color: AppColors.rosaBeigeClaro.withValues(alpha: 0.6),
+                          ),
+                        ),
+                        child: CheckboxListTile(
+                          value: _predeterminada,
+                          onChanged: (v) =>
+                              setState(() => _predeterminada = v ?? false),
+                          title: Text(
+                            'Predeterminada',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.cafeOscuro,
+                                ),
+                          ),
+                          subtitle: Text(
+                            'Usar como dirección de envío por defecto',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: AppColors.cafeOscuro.withValues(alpha: 0.5),
+                                ),
+                          ),
+                          activeColor: AppColors.vino,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                          ),
+                          controlAffinity: ListTileControlAffinity.leading,
+                          dense: true,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // ── Acciones: Cancelar / Guardar en fila, mismo ancho ──────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              child: AppFormActions(
+                cancelLabel: 'Cancelar',
+                onCancel: () => Navigator.of(context).pop(),
+                primaryLabel: 'Guardar',
+                onPrimary: _guardar,
+              ),
+            ),
+          ],
         ),
       ),
-      content: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _aliasCtrl,
-                textCapitalization: TextCapitalization.words,
-                inputFormatters: [
-                  FormValidators.addressFormatter,
-                  LengthLimitingTextInputFormatter(40),
-                ],
-                decoration: _fieldDecoration('Alias (ej. Casa)'),
-                validator: (v) =>
-                    FormValidators.requiredAddressText(v, 'El alias'),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _calleCtrl,
-                textCapitalization: TextCapitalization.words,
-                inputFormatters: [
-                  FormValidators.addressFormatter,
-                  LengthLimitingTextInputFormatter(100),
-                ],
-                decoration: _fieldDecoration('Calle'),
-                validator: (v) =>
-                    FormValidators.requiredAddressText(v, 'La calle'),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _coloniaCtrl,
-                textCapitalization: TextCapitalization.words,
-                inputFormatters: [
-                  FormValidators.addressFormatter,
-                  LengthLimitingTextInputFormatter(80),
-                ],
-                decoration: _fieldDecoration('Colonia'),
-                validator: (v) =>
-                    FormValidators.optionalAddressText(v, 'La colonia'),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _ciudadCtrl,
-                      textCapitalization: TextCapitalization.words,
-                      inputFormatters: [
-                        FormValidators.lettersOnlyFormatter,
-                        LengthLimitingTextInputFormatter(60),
-                      ],
-                      decoration: _fieldDecoration('Ciudad'),
-                      validator: (v) =>
-                          FormValidators.requiredLetters(v, 'La ciudad'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _estadoCtrl,
-                      textCapitalization: TextCapitalization.words,
-                      inputFormatters: [
-                        FormValidators.lettersOnlyFormatter,
-                        LengthLimitingTextInputFormatter(60),
-                      ],
-                      decoration: _fieldDecoration('Estado'),
-                      validator: (v) =>
-                          FormValidators.requiredLetters(v, 'El estado'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _cpCtrl,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FormValidators.digitsOnlyFormatter,
-                        LengthLimitingTextInputFormatter(5),
-                      ],
-                      decoration: _fieldDecoration('CP'),
-                      validator: FormValidators.requiredPostalCode,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _telefonoCtrl,
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: [
-                        FormValidators.digitsOnlyFormatter,
-                        LengthLimitingTextInputFormatter(10),
-                      ],
-                      decoration: _fieldDecoration('Teléfono'),
-                      validator: FormValidators.requiredPhone,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _refsCtrl,
-                textCapitalization: TextCapitalization.sentences,
-                inputFormatters: [
-                  FormValidators.addressFormatter,
-                  LengthLimitingTextInputFormatter(120),
-                ],
-                decoration: _fieldDecoration('Referencias'),
-                validator: (v) =>
-                    FormValidators.optionalAddressText(v, 'Las referencias'),
-              ),
-              const SizedBox(height: 6),
-              CheckboxListTile(
-                value: _predeterminada,
-                onChanged: (v) => setState(() => _predeterminada = v ?? false),
-                title: const Text('Predeterminada'),
-                contentPadding: EdgeInsets.zero,
-                controlAffinity: ListTileControlAffinity.leading,
-              ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(
-          onPressed: _guardar,
-          style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-          ),
-          child: const Text('Guardar'),
-        ),
-      ],
     );
   }
 }

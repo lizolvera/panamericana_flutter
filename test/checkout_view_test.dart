@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:panamericana_flutter/data/network/api_client.dart';
 import 'package:panamericana_flutter/data/repositories/auth_repository.dart';
@@ -29,6 +30,9 @@ class _Window implements PaymentWindow {
 }
 
 void main() {
+  setUpAll(() {
+    GoogleFonts.config.allowRuntimeFetching = false;
+  });
   for (final approved in [true, false]) {
     testWidgets(
       approved

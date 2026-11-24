@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
 import '../../../shared/form_validators.dart';
+import '../../../shared/widgets/widgets.dart';
 import '../../shell/shell_scaffold.dart';
 import 'google/google_button.dart';
 import '../view_models/auth_view_model.dart';
@@ -80,7 +81,9 @@ class _LoginViewState extends State<LoginView> {
         content: Text(mensaje),
         backgroundColor: AppColors.vino,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
@@ -97,7 +100,7 @@ class _LoginViewState extends State<LoginView> {
         color: AppColors.fondoGeneral,
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+            padding: AppTheme.padding24.copyWith(bottom: 96, top: 36),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 440),
               child: Form(
@@ -128,181 +131,81 @@ class _LoginViewState extends State<LoginView> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    AppTheme.spacer24,
 
                     // ── Título principal ──────────────────────────────────────
-                    const Text(
+                    const AppTitle(
                       'Distribuidora Panamericana',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.cafeOscuro,
-                        letterSpacing: 0.2,
-                      ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
+                    AppTheme.spacer8,
+                    AppSubtitle(
                       paso2 ? 'Verificación 2FA' : 'Crear una cuenta',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.terracota,
-                      ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
+                    AppTheme.spacer8,
+                    AppCaption(
                       paso2
                           ? 'Ingresa el código de 6 dígitos enviado a tu correo'
                           : 'Introduce tu correo electrónico para registrarte en ésta aplicación o inicia sesión',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.cafeOscuro.withValues(alpha: 0.6),
-                        height: 1.4,
-                      ),
                     ),
-                    const SizedBox(height: 28),
+                    AppTheme.spacer24,
 
+                    // ── Tarjeta del formulario ────────────────────────────────
+                    AppFormCard(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                     // ── Formulario paso 1 ─────────────────────────────────────
                     if (!paso2) ...[
                       // Campo correo
                       Semantics(
                         identifier: 'login_email',
-                        child: TextFormField(
+                        child: AppInputField(
                           controller: _emailCtrl,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.email],
-                          decoration: InputDecoration(
-                            hintText: 'Email @ Panamericana.com',
-                            prefixIcon: const Icon(
-                              Icons.email_outlined,
-                              color: AppColors.terracota,
-                            ),
-                            filled: true,
-                            fillColor: AppColors.blancoCalido,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                  color: AppColors.rosaBeigeClaro),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                  color: AppColors.rosaBeigeClaro),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                  color: AppColors.vino, width: 1.5),
-                            ),
-                          ),
+                          hintText: 'Email @ Panamericana.com',
+                          prefixIcon: const Icon(Icons.email_outlined),
                           validator: FormValidators.requiredEmail,
                         ),
                       ),
-                      const SizedBox(height: 14),
-                      // Campo contraseña / 2FA
-                      TextFormField(
+                      AppTheme.spacer16,
+                      // Campo contraseña
+                      AppInputField(
                         controller: _passwordCtrl,
                         obscureText: !_passwordVisible,
                         textInputAction: TextInputAction.done,
                         autofillHints: const [AutofillHints.password],
-                        decoration: InputDecoration(
-                          hintText: 'Contraseña',
-                          prefixIcon: const Icon(
-                            Icons.lock_outline,
-                            color: AppColors.terracota,
+                        hintText: 'Contraseña',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _passwordVisible
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            size: 20,
                           ),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _passwordVisible
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                              color: AppColors.terracota,
-                              size: 20,
-                            ),
-                            onPressed: () => setState(
-                                () => _passwordVisible = !_passwordVisible),
-                          ),
-                          filled: true,
-                          fillColor: AppColors.blancoCalido,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                                color: AppColors.rosaBeigeClaro),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                                color: AppColors.rosaBeigeClaro),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                                color: AppColors.vino, width: 1.5),
-                          ),
+                          onPressed: () => setState(
+                              () => _passwordVisible = !_passwordVisible),
                         ),
                         validator: (v) => (v == null || v.isEmpty)
                             ? 'Ingresa tu contraseña'
                             : null,
                       ),
-                      const SizedBox(height: 24),
+                      AppTheme.spacer20,
                       // Botón "Continuar"
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton(
-                          style: FilledButton.styleFrom(
-                            minimumSize: const Size.fromHeight(52),
-                            backgroundColor: AppColors.vino,
-                            foregroundColor: AppColors.blancoCalido,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            textStyle: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          onPressed:
-                              cargando ? null : () => _enviarCredenciales(vm),
-                          child: const Text('Continuar'),
-                        ),
+                      AppPrimaryButton(
+                        onPressed: cargando ? null : () => _enviarCredenciales(vm),
+                        text: 'Continuar',
                       ),
-                      const SizedBox(height: 20),
+                      AppTheme.spacer16,
                       // Divisor "o"
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Divider(
-                              color: AppColors.rosaBeigeClaro
-                                  .withValues(alpha: 0.8),
-                              thickness: 1.2,
-                            ),
-                          ),
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 14),
-                            child: Text(
-                              'o',
-                              style: TextStyle(
-                                color: AppColors.cafeOscuro
-                                    .withValues(alpha: 0.4),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Divider(
-                              color: AppColors.rosaBeigeClaro
-                                  .withValues(alpha: 0.8),
-                              thickness: 1.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
+                      const AppOrDivider(),
+                      AppTheme.spacer16,
                       // Botón "Continuar con Google"
                       Center(
                         child: googleSignInButton(
@@ -310,73 +213,58 @@ class _LoginViewState extends State<LoginView> {
                           () => _iniciarConGoogle(vm),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      AppTheme.spacer24,
                       // Términos y privacidad
                       Text.rich(
                         TextSpan(
-                          text:
-                              'Al hacer clic en continuar, aceptas nuestros ',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.cafeOscuro.withValues(alpha: 0.5),
-                          ),
+                          text: 'Al hacer clic en continuar, aceptas nuestros ',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.cafeOscuro.withValues(alpha: 0.5),
+                                letterSpacing: 0.2,
+                              ),
                           children: [
                             TextSpan(
                               text: 'Términos de Servicio',
-                              style: const TextStyle(
-                                color: AppColors.vino,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: AppColors.vino,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.2,
+                                  ),
                             ),
                             const TextSpan(text: ' y nuestra '),
                             TextSpan(
                               text: 'Política de privacidad',
-                              style: const TextStyle(
-                                color: AppColors.vino,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: AppColors.vino,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.2,
+                                  ),
                             ),
                           ],
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 20),
+                      AppTheme.spacer16,
                       // Accesos: registro y recuperación de cuenta
-                      TextButton(
+                      AppTextButton(
                         onPressed: () {
                           Navigator.of(context).pushNamed('/registro');
                         },
-                        child: Text(
-                          '¿No tienes cuenta? Regístrate',
-                          style: const TextStyle(
-                            color: AppColors.vino,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        text: '¿No tienes cuenta? Regístrate',
+                        color: AppColors.vino,
                       ),
-                      TextButton(
+                      AppTextButton(
                         onPressed: () {
                           Navigator.of(context).pushNamed('/recuperacion');
                         },
-                        child: Text(
-                          '¿Olvidaste tu contraseña?',
-                          style: const TextStyle(
-                            color: AppColors.terracota,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        text: '¿Olvidaste tu contraseña?',
+                        color: AppColors.terracota,
                       ),
                     ]
                     // ── Formulario paso 2 (2FA) ─────────────────────────────
                     else ...[
                       // Correo indicado
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AppColors.rosaBeigeClaro.withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.rosaBeigeClaro),
-                        ),
+                      AppOutlineCard(
                         child: Row(
                           children: [
                             const Icon(
@@ -384,80 +272,34 @@ class _LoginViewState extends State<LoginView> {
                               size: 22,
                               color: AppColors.terracota,
                             ),
-                            const SizedBox(width: 10),
+                            AppTheme.widthSpacer16,
                             Expanded(
                               child: Text(
                                 _emailCtrl.text.trim(),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.cafeOscuro,
-                                ),
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.cafeOscuro,
+                                      letterSpacing: 0.2,
+                                    ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      AppTheme.spacer12,
                       // Campo código 2FA
-                      TextFormField(
+                      AppCodeInputField(
                         controller: _codeCtrl,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FormValidators.digitsOnlyFormatter,
-                          LengthLimitingTextInputFormatter(6),
-                        ],
-                        maxLength: 6,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          letterSpacing: 10,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.vinoOscuro,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: '------',
-                          hintStyle: TextStyle(
-                            color: AppColors.cafeOscuro.withValues(alpha: 0.3),
-                            letterSpacing: 8,
-                          ),
-                          counterText: '',
-                          filled: true,
-                          fillColor: AppColors.blancoCalido,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                                color: AppColors.rosaBeigeClaro),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                                color: AppColors.vino, width: 1.5),
-                          ),
-                        ),
-                        validator: (v) =>
-                            FormValidators.requiredDigits(
-                          v,
-                          'El código',
-                          length: 6,
-                        ),
+                        length: 6,
                       ),
-                      const SizedBox(height: 20),
+                      AppTheme.spacer16,
                       // Botón verificar
-                      FilledButton(
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size.fromHeight(52),
-                          backgroundColor: AppColors.vino,
-                          foregroundColor: AppColors.blancoCalido,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed:
-                            cargando ? null : () => _verificarCodigo(vm),
-                        child: const Text('Verificar y entrar'),
+                      AppPrimaryButton(
+                        onPressed: cargando ? null : () => _verificarCodigo(vm),
+                        text: 'Verificar y entrar',
                       ),
-                      const SizedBox(height: 10),
+                      AppTheme.spacer8,
                       TextButton.icon(
                         onPressed: cargando
                             ? null
@@ -465,19 +307,25 @@ class _LoginViewState extends State<LoginView> {
                                 _codeCtrl.clear();
                                 vm.resetState();
                               },
-                        icon: const Icon(Icons.arrow_back, size: 16,
-                            color: AppColors.terracota),
-                        label: const Text(
-                          'Cambiar correo o contraseña',
-                          style: TextStyle(color: AppColors.terracota),
+                        icon: const Icon(Icons.arrow_back, size: 16),
+                        label: const Text('Cambiar correo o contraseña'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.terracota,
+                          textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.2,
+                              ),
                         ),
                       ),
                     ],
+                        ],
+                      ),
+                    ),
 
                     // ── Indicador de carga ────────────────────────────────────
                     if (cargando)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 20),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 20),
                         child: Center(
                           child: CircularProgressIndicator(
                             color: AppColors.vino,
@@ -487,15 +335,15 @@ class _LoginViewState extends State<LoginView> {
 
                     // ── Opción de invitado ────────────────────────────────────
                     if (Navigator.of(context).canPop() && !cargando) ...[
-                      const SizedBox(height: 16),
-                      TextButton(
+                      AppTheme.spacer12,
+                      AppTextButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        child: Text(
-                          'Continuar como invitado',
-                          style: TextStyle(
-                            color: AppColors.cafeOscuro.withValues(alpha: 0.5),
-                          ),
-                        ),
+                        text: 'Continuar como invitado',
+                        color: AppColors.cafeOscuro,
+                        textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppColors.cafeOscuro.withValues(alpha: 0.5),
+                              letterSpacing: 0.2,
+                            ),
                       ),
                     ],
                   ],

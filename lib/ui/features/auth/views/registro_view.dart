@@ -6,11 +6,16 @@ import '../../../../data/repositories/auth_repository.dart';
 import '../../../shared/form_validators.dart';
 import '../../../shared/preguntas_secretas.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
+import '../../../shared/widgets/widgets.dart';
 import '../../shell/shell_scaffold.dart';
 
 /// **View de registro**: crea una cuenta nueva (POST /api/usuarios/register)
 /// con validaciones iguales a la web (letras, correo, teléfono, contraseña
 /// fuerte y pregunta secreta).
+///
+/// Diseño boutique: formulario en tarjeta con secciones (datos personales,
+/// contacto, seguridad), campos con iconos y botón primario con carga.
 class RegistroView extends StatefulWidget {
   const RegistroView({super.key});
 
@@ -55,6 +60,19 @@ class _RegistroViewState extends State<RegistroView> {
       initialDate: DateTime(hoy.year - 18),
       firstDate: DateTime(1950),
       lastDate: hoy,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+                colorScheme: Theme.of(context).colorScheme.copyWith(
+                      primary: AppColors.vino,
+                      onPrimary: AppColors.blancoCalido,
+                      surface: AppColors.blancoCalido,
+                      onSurface: AppColors.cafeOscuro,
+                    ),
+              ),
+          child: child!,
+        );
+      },
     );
     if (fecha != null) setState(() => _fechaNacimiento = fecha);
   }
@@ -82,9 +100,13 @@ class _RegistroViewState extends State<RegistroView> {
       if (!mounted) return;
       // El mensaje lo muestra el messenger raíz, sobrevive a la navegación.
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cuenta creada con éxito. Inicia sesión.'),
+        SnackBar(
+          content: const Text('Cuenta creada con éxito. Inicia sesión.'),
           backgroundColor: AppColors.vino,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       Navigator.of(context).pop();
@@ -95,6 +117,10 @@ class _RegistroViewState extends State<RegistroView> {
         SnackBar(
           content: Text(mensaje),
           backgroundColor: AppColors.vinoOscuro,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
     } finally {
@@ -116,162 +142,188 @@ class _RegistroViewState extends State<RegistroView> {
   Widget build(BuildContext context) {
     return ShellScaffold(
       titleText: 'Crear cuenta',
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _nombreCtrl,
-                inputFormatters: [FormValidators.lettersOnlyFormatter],
-                decoration: const InputDecoration(
-                  labelText: 'Nombre *',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => FormValidators.requiredLetters(v, 'El nombre'),
+      body: Container(
+        color: AppColors.fondoGeneral,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 96), // bottom deja espacio al NavigationBar (extendBody)
+          child: Form(
+            key: _formKey,
+            child: AppFormCard(
+              maxWidth: 580,
+              header: const AppFormHeader(
+                icon: Icons.person_add_alt_1_outlined,
+                title: 'Crear cuenta',
+                caption: 'Completa tus datos para registrarte en Panamericana.',
               ),
-              const SizedBox(height: 12),
-              Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _apCtrl,
-                      inputFormatters: [FormValidators.lettersOnlyFormatter],
-                      decoration: const InputDecoration(
-                        labelText: 'Apellido paterno',
-                        border: OutlineInputBorder(),
+                  // ── Datos personales ──────────────────────────────────────
+                  const AppFormSectionLabel('Datos personales'),
+                  AppFormField(
+                    controller: _nombreCtrl,
+                    labelText: 'Nombre *',
+                    hintText: 'Nombre *',
+                    prefixIcon: const Icon(Icons.person_outline),
+                    textCapitalization: TextCapitalization.words,
+                    inputFormatters: [FormValidators.lettersOnlyFormatter],
+                    validator: (v) =>
+                        FormValidators.requiredLetters(v, 'El nombre'),
+                  ),
+                  AppTheme.spacer12,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppFormField(
+                          controller: _apCtrl,
+                          labelText: 'Apellido paterno',
+                          hintText: 'Apellido paterno',
+                          textCapitalization: TextCapitalization.words,
+                          inputFormatters: [
+                            FormValidators.lettersOnlyFormatter
+                          ],
+                          validator: (v) => FormValidators.optionalLetters(
+                            v,
+                            'El apellido paterno',
+                          ),
+                        ),
                       ),
-                      validator: (v) =>
-                          FormValidators.optionalLetters(v, 'El apellido paterno'),
+                      AppTheme.widthSpacer12,
+                      Expanded(
+                        child: AppFormField(
+                          controller: _amCtrl,
+                          labelText: 'Apellido materno',
+                          hintText: 'Apellido materno',
+                          textCapitalization: TextCapitalization.words,
+                          inputFormatters: [
+                            FormValidators.lettersOnlyFormatter
+                          ],
+                          validator: (v) => FormValidators.optionalLetters(
+                            v,
+                            'El apellido materno',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  AppTheme.spacer12,
+                  AppDateField(
+                    labelText: 'Fecha de nacimiento *',
+                    date: _fechaNacimiento,
+                    onTap: _elegirFecha,
+                  ),
+                  AppTheme.spacer20,
+
+                  // ── Contacto ──────────────────────────────────────────────
+                  const AppFormSectionLabel('Contacto'),
+                  AppFormField(
+                    controller: _emailCtrl,
+                    keyboardType: TextInputType.emailAddress,
+                    labelText: 'Correo *',
+                    hintText: 'Correo *',
+                    prefixIcon: const Icon(Icons.email_outlined),
+                    validator: (v) => FormValidators.requiredEmail(v),
+                  ),
+                  AppTheme.spacer12,
+                  AppFormField(
+                    controller: _telefonoCtrl,
+                    keyboardType: TextInputType.phone,
+                    labelText: 'Teléfono (10 dígitos) *',
+                    hintText: 'Teléfono (10 dígitos) *',
+                    prefixIcon: const Icon(Icons.phone_outlined),
+                    inputFormatters: [FormValidators.digitsOnlyFormatter],
+                    validator: (v) => FormValidators.requiredPhone(v),
+                  ),
+                  AppTheme.spacer20,
+
+                  // ── Seguridad ─────────────────────────────────────────────
+                  const AppFormSectionLabel('Seguridad'),
+                  AppFormField(
+                    controller: _passwordCtrl,
+                    obscureText: true,
+                    labelText: 'Contraseña *',
+                    hintText: 'Contraseña *',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    onChanged: (_) => setState(() {}),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) {
+                        return 'Ingresa una contraseña';
+                      }
+                      if (!_passwordRegex.hasMatch(v)) {
+                        return 'Mínimo 12 caracteres, una mayúscula, un número y un símbolo';
+                      }
+                      return null;
+                    },
+                  ),
+                  AppTheme.spacer12,
+                  AppPasswordRequirements(password: _passwordCtrl.text),
+                  AppTheme.spacer12,
+                  AppFormField(
+                    controller: _confirmCtrl,
+                    obscureText: true,
+                    labelText: 'Confirmar contraseña *',
+                    hintText: 'Confirmar contraseña *',
+                    prefixIcon: const Icon(Icons.check_circle_outline),
+                    validator: (v) => (v != _passwordCtrl.text)
+                        ? 'Las contraseñas no coinciden'
+                        : null,
+                  ),
+                  AppTheme.spacer12,
+                  AppDropdownField<String>(
+                    value: _preguntaSecreta,
+                    labelText: 'Pregunta secreta *',
+                    hintText: 'Selecciona una pregunta',
+                    prefixIcon: const Icon(Icons.help_outline),
+                    items: kPreguntasSecretas.entries
+                        .map(
+                          (e) => DropdownMenuItem(
+                            value: e.key,
+                            child: Text(
+                              e.value,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(letterSpacing: 0.2),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => _preguntaSecreta = v),
+                    validator: (v) =>
+                        v == null ? 'Selecciona una pregunta' : null,
+                  ),
+                  AppTheme.spacer12,
+                  AppFormField(
+                    controller: _respuestaCtrl,
+                    labelText: 'Respuesta secreta *',
+                    hintText: 'Respuesta secreta *',
+                    prefixIcon: const Icon(Icons.edit_note_outlined),
+                    textCapitalization: TextCapitalization.sentences,
+                    validator: (v) => FormValidators.requiredText(
+                      v,
+                      'La respuesta',
+                      min: 2,
+                      max: 60,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _amCtrl,
-                      inputFormatters: [FormValidators.lettersOnlyFormatter],
-                      decoration: const InputDecoration(
-                        labelText: 'Apellido materno',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (v) =>
-                          FormValidators.optionalLetters(v, 'El apellido materno'),
-                    ),
+                  AppTheme.spacer24,
+                  AppPrimaryButton(
+                    onPressed: _guardando ? null : _registrar,
+                    text: 'Crear cuenta',
+                    child: _guardando
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.blancoCalido,
+                            ),
+                          )
+                        : null,
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _emailCtrl,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Correo *',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => FormValidators.requiredEmail(v),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _telefonoCtrl,
-                keyboardType: TextInputType.phone,
-                inputFormatters: [FormValidators.digitsOnlyFormatter],
-                decoration: const InputDecoration(
-                  labelText: 'Teléfono (10 dígitos) *',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => FormValidators.requiredPhone(v),
-              ),
-              const SizedBox(height: 12),
-              InkWell(
-                onTap: _elegirFecha,
-                child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Fecha de nacimiento *',
-                    border: OutlineInputBorder(),
-                  ),
-                  child: Text(
-                    _fechaNacimiento == null
-                        ? 'Selecciona tu fecha'
-                        : '${_fechaNacimiento!.day}/${_fechaNacimiento!.month}/${_fechaNacimiento!.year}',
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _passwordCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Contraseña *',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Ingresa una contraseña';
-                  if (!_passwordRegex.hasMatch(v)) {
-                    return 'Mínimo 12 caracteres, una mayúscula, un número y un símbolo';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _confirmCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Confirmar contraseña *',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) =>
-                    (v != _passwordCtrl.text) ? 'Las contraseñas no coinciden' : null,
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: _preguntaSecreta,
-                items: kPreguntasSecretas.entries
-                    .map(
-                      (e) => DropdownMenuItem(
-                        value: e.key,
-                        child: Text(e.value),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (v) => setState(() => _preguntaSecreta = v),
-                decoration: const InputDecoration(
-                  labelText: 'Pregunta secreta *',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => v == null ? 'Selecciona una pregunta' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _respuestaCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Respuesta secreta *',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) =>
-                    FormValidators.requiredText(v, 'La respuesta', min: 2, max: 60),
-              ),
-              const SizedBox(height: 20),
-              FilledButton(
-                onPressed: _guardando ? null : _registrar,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.vino,
-                  minimumSize: const Size.fromHeight(48),
-                ),
-                child: _guardando
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text('Crear cuenta'),
-              ),
-            ],
+            ),
           ),
         ),
       ),

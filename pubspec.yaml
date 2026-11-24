@@ -41,6 +41,7 @@ dependencies:
   google_sign_in_web: ^1.1.3
   url_launcher: ^6.3.3
   webview_flutter: ^4.14.1
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   integration_test:
@@ -68,6 +69,31 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/fonts/
+
+  fonts:
+    - family: Playfair Display
+      fonts:
+        - asset: assets/fonts/playfair-display-regular.ttf
+          weight: 400
+        - asset: assets/fonts/playfair-display-medium.ttf
+          weight: 500
+        - asset: assets/fonts/playfair-display-semibold.ttf
+          weight: 600
+        - asset: assets/fonts/playfair-display-bold.ttf
+          weight: 700
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/inter-regular.ttf
+          weight: 400
+        - asset: assets/fonts/inter-medium.ttf
+          weight: 500
+        - asset: assets/fonts/inter-semibold.ttf
+          weight: 600
+        - asset: assets/fonts/inter-bold.ttf
+          weight: 700
 
   # To add assets to your application, add an assets section, like this:
   # assets:

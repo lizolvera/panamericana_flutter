@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:panamericana_flutter/ui/features/profile/views/datos_view.dart';
 import 'package:panamericana_flutter/ui/features/profile/views/password_view.dart';
 import 'package:panamericana_flutter/ui/features/profile/views/pregunta_view.dart';
@@ -12,6 +13,9 @@ import 'package:panamericana_flutter/ui/shared/preguntas_secretas.dart';
 import 'support/fixture_api.dart';
 
 void main() {
+  setUpAll(() {
+    GoogleFonts.config.allowRuntimeFetching = false;
+  });
   late FixtureApi f;
   setUp(() async {
     f = FixtureApi();

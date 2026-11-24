@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:panamericana_flutter/data/repositories/auth_repository.dart';
@@ -15,7 +16,10 @@ import 'package:panamericana_flutter/ui/theme/app_theme.dart';
 import 'fonts.dart';
 
 void main() {
-  setUpAll(loadGoldenFonts);
+  setUpAll(() {
+    GoogleFonts.config.allowRuntimeFetching = false;
+    loadGoldenFonts();
+  });
   testWidgets('carrito con productos, cantidades y total', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;

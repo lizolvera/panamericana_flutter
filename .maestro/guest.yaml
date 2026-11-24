@@ -5,12 +5,16 @@ name: Invitado y validación del formulario
 # Avoid Maestro's launchApp transport failure; keep every UI assertion below.
 - extendedWaitUntil:
     visible: "Panamericana"
-    timeout: 60000
+    timeout: 120000
 - assertVisible: "(?s).*Carrito.*"
 - tapOn: "(?s).*Perfil.*"
 - extendedWaitUntil:
-    visible: "Continuar"
-    timeout: 15000
+    visible: "Iniciar sesión"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: "Continuar"
+    timeout: 20000
 - tapOn: "Continuar"
 - assertVisible: "El correo es obligatorio"
 - assertVisible: "Ingresa tu contraseña"
@@ -18,6 +22,10 @@ name: Invitado y validación del formulario
     id: "login_email"
 - inputText: "correo-invalido"
 - hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "Continuar"
+    timeout: 20000
 - tapOn: "Continuar"
 - assertVisible: "Ingresa un correo válido"
 - takeScreenshot: "reports/maestro/login-validacion"
