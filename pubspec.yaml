@@ -70,6 +70,31 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  assets:
+    - assets/fonts/
+
+  fonts:
+    - family: Playfair Display
+      fonts:
+        - asset: assets/fonts/playfair-display-regular.ttf
+          weight: 400
+        - asset: assets/fonts/playfair-display-medium.ttf
+          weight: 500
+        - asset: assets/fonts/playfair-display-semibold.ttf
+          weight: 600
+        - asset: assets/fonts/playfair-display-bold.ttf
+          weight: 700
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/inter-regular.ttf
+          weight: 400
+        - asset: assets/fonts/inter-medium.ttf
+          weight: 500
+        - asset: assets/fonts/inter-semibold.ttf
+          weight: 600
+        - asset: assets/fonts/inter-bold.ttf
+          weight: 700
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

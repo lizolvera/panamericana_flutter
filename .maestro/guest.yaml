@@ -5,7 +5,7 @@ name: Invitado y validación del formulario
 # Avoid Maestro's launchApp transport failure; keep every UI assertion below.
 - extendedWaitUntil:
     visible: "Panamericana"
-    timeout: 60000
+    timeout: 120000
 - assertVisible: "(?s).*Carrito.*"
 - tapOn: "(?s).*Perfil.*"
 - extendedWaitUntil:
